@@ -5,6 +5,22 @@
             <pattern>%remoteIP [%date] %requestMethod %requestURI %statusCode %bytesSent %elapsedTime</pattern>
         </encoder>
     </appender>
+    <appender name="fast-kafka-appender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+        <encoder>
+            <pattern>%remoteIP [%date] %requestMethod %requestURI %statusCode %bytesSent %elapsedTime</pattern>
+        </encoder>
 
+        <topic>medical-api.logs</topic>
+        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
+        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
+
+        <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+        <producerConfig>acks=0</producerConfig>
+        <producerConfig>linger.ms=100</producerConfig>
+        <producerConfig>max.block.ms=100</producerConfig>
+        <producerConfig>client.id=${HOSTNAME}-${CONTEXT_NAME}-logback-relaxed</producerConfig>
+    </appender>
+
+    <appender-ref ref="fast-kafka-appender" />
     <appender-ref ref="STDOUT" />
 </configuration>
