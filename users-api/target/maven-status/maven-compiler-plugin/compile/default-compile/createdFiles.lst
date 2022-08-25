@@ -1,0 +1,6 @@
+com\demo\dummyapi\DummyapiApplication.class
+com\demo\dummyapi\services\RandomPersonService.class
+com\demo\dummyapi\controller\PersonAPI.class
+com\demo\dummyapi\services\PersonService.class
+com\demo\dummyapi\entity\Person.class
+com\demo\dummyapi\repository\Repository.class
