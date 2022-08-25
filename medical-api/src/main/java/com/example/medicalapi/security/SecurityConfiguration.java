@@ -55,5 +55,4 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 firstUser
         );
     }
-
 }
