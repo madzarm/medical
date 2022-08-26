@@ -2,22 +2,20 @@ package com.demo.dummyapi.entity;
 
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-public class Person {
+public class Record {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
     private int userid;
 	private String diseases;
 
-	public Person() {
+	public Record() {
 
 	}
 
-	public Person(String diseases) {
+	public Record(String diseases) {
 		super();
 		this.diseases = diseases;
 	}

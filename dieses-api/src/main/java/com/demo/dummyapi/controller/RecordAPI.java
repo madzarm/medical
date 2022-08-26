@@ -3,38 +3,36 @@ package com.demo.dummyapi.controller;
 import java.util.List;
 
 import com.demo.dummyapi.repository.Repository;
-import com.demo.dummyapi.services.RandomPersonService;
+import com.demo.dummyapi.services.RandomRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.demo.dummyapi.entity.Person;
+import com.demo.dummyapi.entity.Record;
 
 @RequestMapping(value = "/api")
 @RestController
-public class PersonAPI {
+public class RecordAPI {
 
-	private final RandomPersonService personService;
+	private final RandomRecordService recordService;
 	private final Repository repository;
 
 	@Autowired
-	public PersonAPI(RandomPersonService personService, Repository repository){
-		this.personService = personService;
+	public RecordAPI(RandomRecordService recordService, Repository repository){
+		this.recordService = recordService;
 		this.repository = repository;
 	}
 
 	@GetMapping(value = "/random")
-	public void randomPeople() {
+	public void randomRecords() {
 
-		List<Person> result = personService.generatePeople();
-
-		System.out.println(result);
+		List<Record> result = recordService.generateRecord();
 
 		repository.saveAll(result);
 	}
-	@GetMapping("/person")
-	public List<Person> getPeople() {
+	@GetMapping("/records")
+	public List<Record> getRecords() {
 		return repository.findAll();
 	}
 
