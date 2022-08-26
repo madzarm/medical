@@ -2,6 +2,7 @@ package com.example.medicalapi.security;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,6 +19,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    @Value("${basic.auth.username}")
+    private String username;
+    @Value("${basic.auth.password}")
+    private String password;
 
     @Autowired
     public SecurityConfiguration(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
@@ -47,8 +52,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     protected UserDetailsService userDetailsService2() {
         UserDetails firstUser = User.builder()
-                .username("username")
-                .password(passwordEncoder.encode("password"))
+                .username(username)
+                .password(passwordEncoder.encode(password))
                 .roles("USER")
                 .build();
         return new InMemoryUserDetailsManager(
