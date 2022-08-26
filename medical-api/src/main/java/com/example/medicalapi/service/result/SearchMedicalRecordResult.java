@@ -1,15 +1,15 @@
 package com.example.medicalapi.service.result;
 
-import com.example.medicalapi.domain.dto.PersonDTO;
+import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
-public class SearchPersonResult {
-    private List<PersonDTO> people;
+public class SearchMedicalRecordResult {
+    private List<MedicalRecordDto> medicalRecords;
 }
