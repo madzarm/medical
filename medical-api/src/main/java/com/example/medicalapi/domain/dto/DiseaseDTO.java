@@ -1,10 +1,9 @@
-package com.example.medicalapi.domain;
+package com.example.medicalapi.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor

@@ -1,8 +1,8 @@
 package com.example.medicalapi.service;
 
-import com.example.medicalapi.domain.DiseaseDTO;
+import com.example.medicalapi.domain.dto.DiseaseDTO;
 import com.example.medicalapi.domain.MedicalRecord;
-import com.example.medicalapi.domain.PersonDTO;
+import com.example.medicalapi.domain.dto.PersonDTO;
 import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.example.medicalapi.service.result.ActionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;

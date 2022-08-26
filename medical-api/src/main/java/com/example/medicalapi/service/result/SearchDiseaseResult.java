@@ -1,6 +1,6 @@
 package com.example.medicalapi.service.result;
 
-import com.example.medicalapi.domain.DiseaseDTO;
+import com.example.medicalapi.domain.dto.DiseaseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
