@@ -18,7 +18,7 @@ public class RandomPersonService{
 
 	public List<Person> generatePeople() {
 		List<Person> people = new ArrayList<>();
-		for(int i = 0; i<50000; i++) {
+		for(int i = 0; i<10000; i++) {
 			var name = NAMES.get(ThreadLocalRandom.current().nextInt(0, NAMES.size()));
 			var surname = SURNAMES.get(ThreadLocalRandom.current().nextInt(0, SURNAMES.size()));
 			var weight = ThreadLocalRandom.current().nextInt(40, 140);
