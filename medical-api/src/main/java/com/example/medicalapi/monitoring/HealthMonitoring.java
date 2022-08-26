@@ -1,8 +1,7 @@
 package com.example.medicalapi.monitoring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -15,6 +14,15 @@ import org.springframework.web.client.RestTemplate;
 @EnableScheduling
 public class HealthMonitoring {
 
+    @Value("${fetch.health.endpoint.uri}")
+    private String uri;
+    @Value("${kafka.topic.health}")
+    private String topic;
+    @Value("${basic.auth.username}")
+    private String username;
+    @Value("${basic.auth.password}")
+    private String password;
+
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final RestTemplateBuilder restTemplateBuilder;
 
@@ -25,12 +33,8 @@ public class HealthMonitoring {
 
     @Scheduled(fixedRate = 300000)
     public void printSomething(){
-        String url = "http://localhost:8080/api/v1/actuator/health";
-
-        String topic = "medical-api.health";
-
-        RestTemplate restTemplate = restTemplateBuilder.basicAuthentication("username","password").build();
-        JSONObject response = restTemplate.getForObject(url, JSONObject.class);
+        RestTemplate restTemplate = restTemplateBuilder.basicAuthentication(username,password).build();
+        JSONObject response = restTemplate.getForObject(uri, JSONObject.class);
         kafkaTemplate.send(topic, String.valueOf(response));
     }
 
