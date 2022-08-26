@@ -7,6 +7,7 @@ import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,6 +23,10 @@ import java.util.stream.Collectors;
 public class Service {
 
     private final MedicalRecordRepository medicalRecordRepository;
+    @Value("${fetch.people.endpoint.uri}")
+    private String fetchPeopleUri;
+    @Value("${fetch.diseases.endpoint.uri}")
+    private String fetchDiseasesUri;
 
     public Service(MedicalRecordRepository medicalRecordRepository) {
         this.medicalRecordRepository = medicalRecordRepository;
@@ -62,22 +67,20 @@ public class Service {
 
     @Async("taskExecutor")
     public CompletableFuture<PersonDTO[]> fetchPeople() {
-        String uri = "http://localhost:8081/api/people";
         RestTemplate restTemplate = new RestTemplate();
-        JSONObject[] response = restTemplate.getForObject(uri, JSONObject[].class);
+        JSONObject[] response = restTemplate.getForObject(fetchPeopleUri, JSONObject[].class);
         PersonDTO[] result = jsonToPersonResult(response);
         return CompletableFuture.completedFuture(result);
     }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseDTO[]> fetchDiseases() {
-        String uri = "http://localhost:8082/api/records";
         RestTemplate restTemplate = new RestTemplate();
-        JSONObject[] response = restTemplate.getForObject(uri, JSONObject[].class);
-        DiseaseDTO[] result = jsonToDiseaseResult(response);
+        JSONObject[] response = restTemplate.getForObject(fetchDiseasesUri, JSONObject[].class);
+        DiseaseDTO[] result = jsonToDiseaseResult(response);// jsonToPojo(response, DiseaseDTO[].class);
         return CompletableFuture.completedFuture(result);
     }
 
-    private <T> T jsonToPojo(JSONObject jsonObject, Class<T> className ){
+    private <T> T jsonToPojo(JSONObject[] jsonObject, Class<T> className ){
         ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
         return mapper.convertValue(jsonObject,className);
     }

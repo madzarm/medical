@@ -34,5 +34,11 @@ public class Record {
 		this.diseases = diseases;
 	}
 
-
+	@Override
+	public String toString() {
+		return "Record{" +
+				"userid=" + userid +
+				", diseases='" + diseases + '\'' +
+				'}';
+	}
 }

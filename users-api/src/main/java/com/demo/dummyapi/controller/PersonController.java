@@ -13,13 +13,13 @@ import com.demo.dummyapi.entity.Person;
 
 @RequestMapping(value = "/api")
 @RestController
-public class PersonAPI {
+public class PersonController {
 
 	private final RandomPersonService personService;
 	private final Repository repository;
 
 	@Autowired
-	public PersonAPI(RandomPersonService personService, Repository repository){
+	public PersonController(RandomPersonService personService, Repository repository){
 		this.personService = personService;
 		this.repository = repository;
 	}

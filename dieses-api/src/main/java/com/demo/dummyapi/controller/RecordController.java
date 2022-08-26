@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.demo.dummyapi.repository.Repository;
 import com.demo.dummyapi.services.RandomRecordService;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,13 +14,13 @@ import com.demo.dummyapi.entity.Record;
 
 @RequestMapping(value = "/api")
 @RestController
-public class RecordAPI {
+public class RecordController {
 
 	private final RandomRecordService recordService;
 	private final Repository repository;
 
 	@Autowired
-	public RecordAPI(RandomRecordService recordService, Repository repository){
+	public RecordController(RandomRecordService recordService, Repository repository){
 		this.recordService = recordService;
 		this.repository = repository;
 	}
@@ -28,7 +29,6 @@ public class RecordAPI {
 	public void randomRecords() {
 
 		List<Record> result = recordService.generateRecord();
-
 		repository.saveAll(result);
 	}
 	@GetMapping("/records")
