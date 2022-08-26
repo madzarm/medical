@@ -19,7 +19,10 @@ public class RandomRecordService{
 			String name;
 			for(int j = 0; j<(ThreadLocalRandom.current().nextInt(0,5)); j++) {
 				name = DIESES.get(ThreadLocalRandom.current().nextInt(0, DIESES.size()));
-				diseases.add(name);
+				if (diseases.contains(name))
+					System.out.println("duplicate");
+				else
+					diseases.add(name);
 			}
 			String listString = String.join(", ", diseases);
 			var result = new Record(listString);

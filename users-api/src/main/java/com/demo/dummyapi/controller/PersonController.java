@@ -1,11 +1,13 @@
 package com.demo.dummyapi.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.demo.dummyapi.repository.Repository;
 import com.demo.dummyapi.services.RandomPersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,4 +40,8 @@ public class PersonController {
 		return repository.findAll();
 	}
 
+	@GetMapping(value = "/person/{id}")
+	public Optional<Person> getRecords(@PathVariable("id") Integer Id) {
+		return repository.findById(Id);
+	}
 }
