@@ -7,12 +7,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="dummyapi" />
+        <module name="dieses-api" />
         <module name="dummyapi2" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="dieses-api" options="-parameters" />
       <module name="dummyapi" options="-parameters" />
       <module name="dummyapi2" options="-parameters" />
     </option>

@@ -1,16 +1,11 @@
 package com.demo.dummyapi.repository;
 
-import java.util.Optional;
-
-
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.demo.dummyapi.entity.Person;
+import com.demo.dummyapi.entity.Record;
 
 
 @org.springframework.stereotype.Repository
-public interface Repository extends JpaRepository<Person, Integer> {
-
-		Optional<Person> findByUserid(Integer userid);
+public interface Repository extends JpaRepository<Record, Integer> {
 
 }
