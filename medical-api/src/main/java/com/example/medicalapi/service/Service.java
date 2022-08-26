@@ -2,9 +2,12 @@ package com.example.medicalapi.service;
 
 import com.example.medicalapi.domain.dto.DiseaseDTO;
 import com.example.medicalapi.domain.MedicalRecord;
+import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import com.example.medicalapi.domain.dto.PersonDTO;
 import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.example.medicalapi.service.result.ActionResult;
+import com.example.medicalapi.service.result.DataResult;
+import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
@@ -33,7 +36,7 @@ public class Service {
         this.medicalRecordRepository = medicalRecordRepository;
     }
 
-    public ActionResult fetchAndLoad() throws ExecutionException, InterruptedException {
+    public DataResult<SearchMedicalRecordResult> fetchAndLoad() throws ExecutionException, InterruptedException {
        CompletableFuture<PersonDTO[]> peopleResult = fetchData(PersonDTO[].class);
        CompletableFuture<DiseaseDTO[]> diseasesResult = fetchData(DiseaseDTO[].class);
        CompletableFuture.allOf(peopleResult,diseasesResult).join();
@@ -63,7 +66,12 @@ public class Service {
        }).collect(Collectors.toList());
 
        medicalRecordRepository.saveAll(medicalRecords);
-       return new ActionResult(true,"Data successfully fetched and loaded into elasticsearch.");
+
+       SearchMedicalRecordResult searchMedicalRecordResult = new SearchMedicalRecordResult();
+       List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
+       searchMedicalRecordResult.setMedicalRecords(medicalRecordDtos);
+
+       return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
     }
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className){
@@ -77,5 +85,18 @@ public class Service {
     private <T> T jsonToPojo(JSONObject[] jsonObject, Class<T> className ){
         ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
         return mapper.convertValue(jsonObject,className);
+    }
+
+
+
+    private List<MedicalRecordDto> mapToDto(List<MedicalRecord> medicalRecords){
+        return medicalRecords.stream().map(m ->
+                MedicalRecordDto.builder()
+                        .age(m.getAge())
+                        .weight(m.getWeight())
+                        .firstName(m.getFirstName())
+                        .lastName(m.getLastName())
+                        .diseases(m.getDiseases()).build()
+        ).collect(Collectors.toList());
     }
 }
