@@ -4,6 +4,7 @@ import com.example.medicalapi.domain.DiseaseDTO;
 import com.example.medicalapi.domain.MedicalRecord;
 import com.example.medicalapi.domain.PersonDTO;
 import com.example.medicalapi.domain.repository.MedicalRecordRepository;
+import com.example.medicalapi.service.result.ActionResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
@@ -32,7 +33,7 @@ public class Service {
         this.medicalRecordRepository = medicalRecordRepository;
     }
 
-    public void fetchAndLoad() throws ExecutionException, InterruptedException {
+    public ActionResult fetchAndLoad() throws ExecutionException, InterruptedException {
        CompletableFuture<PersonDTO[]> peopleResult = fetchPeople();
        CompletableFuture<DiseaseDTO[]> diseasesResult = fetchDiseases();
        CompletableFuture.allOf(peopleResult,diseasesResult).join();
@@ -63,6 +64,8 @@ public class Service {
        }).collect(Collectors.toList());
 
        medicalRecordRepository.saveAll(medicalRecords);
+
+       return new ActionResult(true,"Successfully fetched and loaded data into elasticsearch");
     }
 
     @Async("taskExecutor")
