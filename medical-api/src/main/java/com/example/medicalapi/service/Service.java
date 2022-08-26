@@ -34,13 +34,12 @@ public class Service {
     }
 
     public ActionResult fetchAndLoad() throws ExecutionException, InterruptedException {
-       CompletableFuture<PersonDTO[]> peopleResult = fetchPeople();
-       CompletableFuture<DiseaseDTO[]> diseasesResult = fetchDiseases();
+       CompletableFuture<PersonDTO[]> peopleResult = fetchData(PersonDTO[].class);
+       CompletableFuture<DiseaseDTO[]> diseasesResult = fetchData(DiseaseDTO[].class);
        CompletableFuture.allOf(peopleResult,diseasesResult).join();
 
        List<PersonDTO> peopleDTOs = Arrays.asList(peopleResult.get());
        List<DiseaseDTO> diseaseDTOs = Arrays.asList(diseasesResult.get());
-
        List<MedicalRecord> medicalRecords = peopleDTOs.stream().map(p -> {
            Optional<DiseaseDTO> diseaseDTOOptional = diseaseDTOs.stream().filter(d -> d.getUserid()==p.getUserid()).findFirst();
            String diseases = "";
@@ -64,48 +63,19 @@ public class Service {
        }).collect(Collectors.toList());
 
        medicalRecordRepository.saveAll(medicalRecords);
-
-       return new ActionResult(true,"Successfully fetched and loaded data into elasticsearch");
-    }
-
-    @Async("taskExecutor")
-    public CompletableFuture<PersonDTO[]> fetchPeople() {
-        RestTemplate restTemplate = new RestTemplate();
-        JSONObject[] response = restTemplate.getForObject(fetchPeopleUri, JSONObject[].class);
-        PersonDTO[] result = jsonToPojo(response, PersonDTO[].class);
-        return CompletableFuture.completedFuture(result);
+       return new ActionResult(true,"Data successfully fetched and loaded into elasticsearch.");
     }
     @Async("taskExecutor")
-    public CompletableFuture<DiseaseDTO[]> fetchDiseases() {
+    public <T> CompletableFuture<T> fetchData(Class<T> className){
         RestTemplate restTemplate = new RestTemplate();
-        JSONObject[] response = restTemplate.getForObject(fetchDiseasesUri, JSONObject[].class);
-        DiseaseDTO[] result = jsonToPojo(response, DiseaseDTO[].class);
+        String uri = className== PersonDTO[].class ? fetchPeopleUri : fetchDiseasesUri;
+        JSONObject[] response = restTemplate.getForObject(uri, JSONObject[].class);
+        T result = jsonToPojo(response, className);
         return CompletableFuture.completedFuture(result);
     }
 
     private <T> T jsonToPojo(JSONObject[] jsonObject, Class<T> className ){
         ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
         return mapper.convertValue(jsonObject,className);
-    }
-
-    @Async("taskExecutor")
-    public CompletableFuture<String> fetchUserInfo(){
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("User");
-        return CompletableFuture.completedFuture("User");
-    }
-    @Async
-    public CompletableFuture<String> fetchMedicalInfo(){
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("Medical");
-        return CompletableFuture.completedFuture("Medical");
     }
 }

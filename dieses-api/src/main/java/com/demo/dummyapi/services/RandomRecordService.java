@@ -14,7 +14,7 @@ public class RandomRecordService{
 
 	public List<Record> generateRecord() {
 		List<Record> table = new ArrayList<>();
-		for(int i = 0; i<1000; i++) {
+		for(int i = 0; i<50000; i++) {
 			List diseases = new ArrayList();
 			String name;
 			for(int j = 0; j<(ThreadLocalRandom.current().nextInt(0,5)); j++) {
@@ -27,6 +27,7 @@ public class RandomRecordService{
 
 			table.add(result);
 		}
+		System.out.println(table.size());
 		return table;
 
 	}
