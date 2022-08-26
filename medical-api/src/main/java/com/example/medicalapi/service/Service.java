@@ -5,7 +5,6 @@ import com.example.medicalapi.domain.MedicalRecord;
 import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import com.example.medicalapi.domain.dto.PersonDTO;
 import com.example.medicalapi.domain.repository.MedicalRecordRepository;
-import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
