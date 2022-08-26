@@ -23,7 +23,7 @@ public class HealthMonitoring {
         this.restTemplateBuilder = restTemplateBuilder;
     }
 
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 300000)
     public void printSomething(){
         String url = "http://localhost:8080/api/v1/actuator/health";
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/Medical.iml" filepath="$PROJECT_DIR$/.idea/Medical.iml" />
+      <module fileurl="file://$PROJECT_DIR$/users-api/dummyapi.iml" filepath="$PROJECT_DIR$/users-api/dummyapi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dieses-api/dummyapi (1).iml" filepath="$PROJECT_DIR$/dieses-api/dummyapi (1).iml" />
+      <module fileurl="file://$PROJECT_DIR$/medical-api/medical-api.iml" filepath="$PROJECT_DIR$/medical-api/medical-api.iml" />
+    </modules>
+  </component>
+</project>

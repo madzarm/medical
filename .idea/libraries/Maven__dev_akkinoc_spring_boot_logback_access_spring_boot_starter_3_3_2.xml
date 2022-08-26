@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: dev.akkinoc.spring.boot:logback-access-spring-boot-starter:3.3.2">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/dev/akkinoc/spring/boot/logback-access-spring-boot-starter/3.3.2/logback-access-spring-boot-starter-3.3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/dev/akkinoc/spring/boot/logback-access-spring-boot-starter/3.3.2/logback-access-spring-boot-starter-3.3.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/dev/akkinoc/spring/boot/logback-access-spring-boot-starter/3.3.2/logback-access-spring-boot-starter-3.3.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

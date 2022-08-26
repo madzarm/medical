@@ -33,7 +33,7 @@ public class PersonAPI {
 
 		repository.saveAll(result);
 	}
-	@GetMapping("/person")
+	@GetMapping("/people")
 	public List<Person> getPeople() {
 		return repository.findAll();
 	}
