@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(indexName = "logstash-mr")
+@Document(indexName = "medical-record")
 public class MedicalRecord {
     @Id
     private int userId;
