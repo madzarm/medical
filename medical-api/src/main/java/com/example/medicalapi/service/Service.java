@@ -69,30 +69,20 @@ public class Service {
     public CompletableFuture<PersonDTO[]> fetchPeople() {
         RestTemplate restTemplate = new RestTemplate();
         JSONObject[] response = restTemplate.getForObject(fetchPeopleUri, JSONObject[].class);
-        PersonDTO[] result = jsonToPersonResult(response);
+        PersonDTO[] result = jsonToPojo(response, PersonDTO[].class);
         return CompletableFuture.completedFuture(result);
     }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseDTO[]> fetchDiseases() {
         RestTemplate restTemplate = new RestTemplate();
         JSONObject[] response = restTemplate.getForObject(fetchDiseasesUri, JSONObject[].class);
-        DiseaseDTO[] result = jsonToDiseaseResult(response);// jsonToPojo(response, DiseaseDTO[].class);
+        DiseaseDTO[] result = jsonToPojo(response, DiseaseDTO[].class);
         return CompletableFuture.completedFuture(result);
     }
 
     private <T> T jsonToPojo(JSONObject[] jsonObject, Class<T> className ){
         ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
         return mapper.convertValue(jsonObject,className);
-    }
-
-    private PersonDTO[] jsonToPersonResult(JSONObject[] jsonObject){
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
-        return mapper.convertValue(jsonObject, PersonDTO[].class);
-    }
-
-    private DiseaseDTO[] jsonToDiseaseResult(JSONObject[] jsonObject){
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
-        return mapper.convertValue(jsonObject, DiseaseDTO[].class);
     }
 
     @Async("taskExecutor")
