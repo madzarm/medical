@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 
@@ -42,6 +43,11 @@ public class Service {
 
        List<PersonDTO> peopleDTOs = Arrays.asList(peopleResult.get());
        List<DiseaseDTO> diseaseDTOs = Arrays.asList(diseasesResult.get());
+       if(peopleDTOs.isEmpty())
+           return new DataResult(false, HttpStatus.NOT_FOUND, "Fetching user data wasn't successful", null);
+       else if (diseaseDTOs.isEmpty())
+           return new DataResult<>(false, HttpStatus.NOT_FOUND,"Fethcing diseases data wasn't successful",null);
+
        List<MedicalRecord> medicalRecords = peopleDTOs.stream().map(p -> {
            Optional<DiseaseDTO> diseaseDTOOptional = diseaseDTOs.stream().filter(d -> d.getUserid()==p.getUserid()).findFirst();
            String diseases = "";
