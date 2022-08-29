@@ -37,7 +37,4 @@ public class HealthMonitoring {
         JSONObject response = restTemplate.getForObject(uri, JSONObject.class);
         kafkaTemplate.send(topic, String.valueOf(response));
     }
-
-
-
 }

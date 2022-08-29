@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,7 +90,7 @@ public class Service {
         List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
 
         SearchMedicalRecordResult response = new SearchMedicalRecordResult(medicalRecordDtos);
-        return new DataResult<>(true, "Successfull fetched data!",response);
+        return new DataResult<>(true, "Successfully fetched data!",response);
     }
 
     @Async("taskExecutor")

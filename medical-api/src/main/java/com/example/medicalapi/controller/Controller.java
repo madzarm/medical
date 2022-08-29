@@ -21,7 +21,7 @@ public class Controller {
     }
 
     @GetMapping("/load")
-    @Cacheable("data")
+    @Cacheable("people")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findAll() throws ExecutionException, InterruptedException {
         return service.findAll().intoResponseEntity();
     }
