@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class Service {
         this.medicalRecordRepository = medicalRecordRepository;
     }
 
-    public DataResult<SearchMedicalRecordResult> fetchAndLoad() throws ExecutionException, InterruptedException {
+    public DataResult<SearchMedicalRecordResult> findAll() throws ExecutionException, InterruptedException {
 
        CompletableFuture<PersonDTO[]> peopleResult;
        try {
@@ -64,27 +63,7 @@ public class Service {
        else if (diseaseDTOs.isEmpty())
            return new DataResult<>(false, HttpStatus.NOT_FOUND,"Fethcing diseases data wasn't successful",null);
 
-       List<MedicalRecord> medicalRecords = peopleDTOs.stream().map(p -> {
-           Optional<DiseaseDTO> diseaseDTOOptional = diseaseDTOs.stream().filter(d -> d.getUserid()==p.getUserid()).findFirst();
-           String diseases = "";
-           if(diseaseDTOOptional.isPresent()){
-               diseases = diseaseDTOOptional.get().getDiseases();
-           }
-           List<String> diseaseList = new ArrayList<>();
-           if(diseases.contains(",")){
-               String[] diseasesArray = diseases.split(", ");
-               diseaseList = (Arrays.asList(diseasesArray));
-           } else if (!diseases.isEmpty()) {
-               diseaseList = (List.of(diseases));
-           }
-           return MedicalRecord.builder()
-                   .age(p.getAge())
-                   .userId(p.getUserid())
-                   .firstName(p.getName())
-                   .lastName(p.getSurname())
-                   .weight(p.getWeight())
-                   .diseases(diseaseList).build();
-       }).collect(Collectors.toList());
+       List<MedicalRecord> medicalRecords = createMedicalRecords(diseaseDTOs,peopleDTOs);
 
        medicalRecordRepository.saveAll(medicalRecords);
 
@@ -95,28 +74,26 @@ public class Service {
        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
     }
 
-//    public DataResult<SearchMedicalRecordResult> findById(int id) {
-//        CompletableFuture<PersonDTO> personResult;
-//        try {
-//            personResult = fetchById(PersonDTO[].class);
-//        } catch (Exception e){
-//            //throw new ResponseStatusException(HttpStatus.CONFLICT,"Fetching user data was unsuccessful!");
-//            return new DataResult<>(false,"Fetching user data was unsuccessful!",null);
-//        }
-//        CompletableFuture<DiseaseDTO> diseaseResult;
-//        try {
-//            diseaseResult =  fetchById(DiseaseDTO[].class);
-//        } catch (Exception e){
-//            return new DataResult<>(false, "Fetching diseases data was unsuccessful",null);
-//        }
-//        CompletableFuture.allOf(peopleResult,diseasesResult).join();
-//
-//    }
+    public DataResult<SearchMedicalRecordResult> findById(int id) throws ExecutionException, InterruptedException {
+        CompletableFuture<PersonDTO> personResult= fetchById(PersonDTO.class,id);
+        CompletableFuture<DiseaseDTO> diseaseResult = fetchById(DiseaseDTO.class, id);
+        CompletableFuture.allOf(personResult,diseaseResult).join();
 
-//    public <T> CompletableFuture<T> fetchById(Class<T> className){
-//        RestTemplate restTemplate = new RestTemplate();
-//        String uri == className== PersonDTO.class ?
-//    }
+        List<MedicalRecord> medicalRecords = createMedicalRecords(List.of(diseaseResult.get()),List.of(personResult.get()));
+        List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
+
+        SearchMedicalRecordResult response = new SearchMedicalRecordResult(medicalRecordDtos);
+        return new DataResult<>(true, "Successfull fetched data!",response);
+    }
+
+    @Async("taskExecutor")
+    public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
+        RestTemplate restTemplate = new RestTemplate();
+        String uri = (className== PersonDTO.class ? fetchPersonUri : fetchDiseaseUri) + id;
+        JSONObject response = restTemplate.getForObject(uri, JSONObject.class);
+        T result = jsonToPojo(response, className);
+        return CompletableFuture.completedFuture(result);
+    }
 
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className){
@@ -131,8 +108,34 @@ public class Service {
         ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
         return mapper.convertValue(jsonObject,className);
     }
+    private <T> T jsonToPojo(JSONObject jsonObject, Class<T> className ){
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
+        return mapper.convertValue(jsonObject,className);
+    }
 
-
+    private List<MedicalRecord> createMedicalRecords(List<DiseaseDTO> diseaseDTOs, List<PersonDTO> peopleDTOs){
+        return peopleDTOs.stream().map(p -> {
+            Optional<DiseaseDTO> diseaseDTOOptional = diseaseDTOs.stream().filter(d -> d.getUserid()==p.getUserid()).findFirst();
+            String diseases = "";
+            if(diseaseDTOOptional.isPresent()){
+                diseases = diseaseDTOOptional.get().getDiseases();
+            }
+            List<String> diseaseList = new ArrayList<>();
+            if(diseases.contains(",")){
+                String[] diseasesArray = diseases.split(", ");
+                diseaseList = (Arrays.asList(diseasesArray));
+            } else if (!diseases.isEmpty()) {
+                diseaseList = (List.of(diseases));
+            }
+            return MedicalRecord.builder()
+                    .age(p.getAge())
+                    .userId(p.getUserid())
+                    .firstName(p.getName())
+                    .lastName(p.getSurname())
+                    .weight(p.getWeight())
+                    .diseases(diseaseList).build();
+        }).collect(Collectors.toList());
+    }
 
     private List<MedicalRecordDto> mapToDto(List<MedicalRecord> medicalRecords){
         return medicalRecords.stream().map(m ->
