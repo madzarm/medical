@@ -5,15 +5,13 @@ import com.example.medicalapi.domain.MedicalRecord;
 import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import com.example.medicalapi.domain.dto.PersonDTO;
 import com.example.medicalapi.domain.repository.MedicalRecordRepository;
-import com.example.medicalapi.exception.exceptions.ConnectionRefusedException;
+import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
+import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.PersonNotFoundException;
+import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,6 +35,10 @@ public class Service {
     private String fetchDiseasesUri;
     @Value("${fetch.disease.endpoint.uri}")
     private String fetchDiseaseUri;
+    @Value("${api.diseases.name}")
+    private String diseaseApiName;
+    @Value("${api.users.name}")
+    private String usersApiName;
 
     public Service(MedicalRecordRepository medicalRecordRepository) {
         this.medicalRecordRepository = medicalRecordRepository;
@@ -44,27 +46,16 @@ public class Service {
 
     public DataResult<SearchMedicalRecordResult> findAll() throws ExecutionException, InterruptedException {
 
-       CompletableFuture<PersonDTO[]> peopleResult;
-       try {
-           peopleResult = fetchData(PersonDTO[].class);
-       } catch (Exception e){
-           //throw new ResponseStatusException(HttpStatus.CONFLICT,"Fetching user data was unsuccessful!");
-           return new DataResult<>(false,"Fetching user data was unsuccessful!",null);
-       }
-       CompletableFuture<DiseaseDTO[]> diseasesResult;
-       try {
-           diseasesResult =  fetchData(DiseaseDTO[].class);
-       } catch (Exception e){
-           //throw new ResponseStatusException(HttpStatus.CONFLICT,"Fetching diseases data was unsuccessful!");
-           return new DataResult<>(false, "Fetching diseases data was unsuccessful",null);
-       }
+       CompletableFuture<PersonDTO[]> peopleResult = fetchData(PersonDTO[].class);
+       CompletableFuture<DiseaseDTO[]> diseasesResult = fetchData(DiseaseDTO[].class);
        CompletableFuture.allOf(peopleResult,diseasesResult).join();
+
        List<PersonDTO> peopleDTOs = Arrays.asList(peopleResult.get());
        List<DiseaseDTO> diseaseDTOs = Arrays.asList(diseasesResult.get());
        if(peopleDTOs.isEmpty())
-           return new DataResult<>(false, HttpStatus.NOT_FOUND, "Fetching user data wasn't successful", null);
+           throw new EmptyResponseException(usersApiName);
        else if (diseaseDTOs.isEmpty())
-           return new DataResult<>(false, HttpStatus.NOT_FOUND,"Fethcing diseases data wasn't successful",null);
+           throw new EmptyResponseException(diseaseApiName);
 
        List<MedicalRecord> medicalRecords = createMedicalRecords(diseaseDTOs,peopleDTOs);
 
@@ -97,33 +88,31 @@ public class Service {
     public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
         RestTemplate restTemplate = new RestTemplate();
         String uri = (className== PersonDTO.class ? fetchPersonUri : fetchDiseaseUri) + id;
-        JSONObject response;
+        T response;
         try {
-            response = restTemplate.getForObject(uri, JSONObject.class);
+            response = restTemplate.getForObject(uri, className);
         }
         catch (Exception e){
-            throw new ConnectionRefusedException();
+            if(className == PersonDTO.class)
+                throw new UsersApiConnectionRefusedException();
+            throw new DiseasesApiConnectionRefusedException();
         }
-        T result = jsonToPojo(response, className);
-        return CompletableFuture.completedFuture(result);
+        return CompletableFuture.completedFuture(response);
     }
 
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className){
         RestTemplate restTemplate = new RestTemplate();
-        String uri = className== PersonDTO[].class ? fetchPeopleUri : fetchDiseasesUri;
-        JSONObject[] response = restTemplate.getForObject(uri, JSONObject[].class);
-        T result = jsonToPojo(response, className);
-        return CompletableFuture.completedFuture(result);
-    }
-
-    private <T> T jsonToPojo(JSONObject[] jsonObject, Class<T> className ){
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
-        return mapper.convertValue(jsonObject,className);
-    }
-    private <T> T jsonToPojo(JSONObject jsonObject, Class<T> className ){
-        ObjectMapper mapper = new ObjectMapper().registerModule(new JsonOrgModule());
-        return mapper.convertValue(jsonObject,className);
+        String uri = className == PersonDTO[].class ? fetchPeopleUri : fetchDiseasesUri;
+        T response;
+        try {
+            response = restTemplate.getForObject(uri, className);
+        } catch (Exception e) {
+           if(className == PersonDTO[].class)
+               throw new UsersApiConnectionRefusedException();
+           throw new DiseasesApiConnectionRefusedException();
+        }
+        return CompletableFuture.completedFuture(response);
     }
 
     private List<MedicalRecord> createMedicalRecords(List<DiseaseDTO> diseaseDTOs, List<PersonDTO> peopleDTOs){
