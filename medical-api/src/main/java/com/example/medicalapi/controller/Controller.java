@@ -6,6 +6,7 @@ import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.ExecutionException;
@@ -24,5 +25,13 @@ public class Controller {
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> fetchAndLoad() throws ExecutionException, InterruptedException {
         return service.fetchAndLoad().intoResponseEntity();
     }
+
+//    @GetMapping("user")
+//    @Cacheable("people")
+//    public ResponseEntity<DataResult<SearchMedicalRecordResult>> getUserById(
+//            @RequestParam int id
+//    ) {
+//        return service.findById(id).intoResponseEntity();
+//    }
 
 }

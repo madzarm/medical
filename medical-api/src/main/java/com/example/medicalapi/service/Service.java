@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,22 +30,37 @@ public class Service {
     private final MedicalRecordRepository medicalRecordRepository;
     @Value("${fetch.people.endpoint.uri}")
     private String fetchPeopleUri;
+    @Value("${fetch.person.endpoint.uri}")
+    private String fetchPersonUri;
     @Value("${fetch.diseases.endpoint.uri}")
     private String fetchDiseasesUri;
+    @Value("${fetch.disease.endpoint.uri}")
+    private String fetchDiseaseUri;
 
     public Service(MedicalRecordRepository medicalRecordRepository) {
         this.medicalRecordRepository = medicalRecordRepository;
     }
 
     public DataResult<SearchMedicalRecordResult> fetchAndLoad() throws ExecutionException, InterruptedException {
-       CompletableFuture<PersonDTO[]> peopleResult = fetchData(PersonDTO[].class);
-       CompletableFuture<DiseaseDTO[]> diseasesResult = fetchData(DiseaseDTO[].class);
-       CompletableFuture.allOf(peopleResult,diseasesResult).join();
 
+       CompletableFuture<PersonDTO[]> peopleResult;
+       try {
+           peopleResult = fetchData(PersonDTO[].class);
+       } catch (Exception e){
+           //throw new ResponseStatusException(HttpStatus.CONFLICT,"Fetching user data was unsuccessful!");
+           return new DataResult<>(false,"Fetching user data was unsuccessful!",null);
+       }
+       CompletableFuture<DiseaseDTO[]> diseasesResult;
+       try {
+           diseasesResult =  fetchData(DiseaseDTO[].class);
+       } catch (Exception e){
+           return new DataResult<>(false, "Fetching diseases data was unsuccessful",null);
+       }
+       CompletableFuture.allOf(peopleResult,diseasesResult).join();
        List<PersonDTO> peopleDTOs = Arrays.asList(peopleResult.get());
        List<DiseaseDTO> diseaseDTOs = Arrays.asList(diseasesResult.get());
        if(peopleDTOs.isEmpty())
-           return new DataResult(false, HttpStatus.NOT_FOUND, "Fetching user data wasn't successful", null);
+           return new DataResult<>(false, HttpStatus.NOT_FOUND, "Fetching user data wasn't successful", null);
        else if (diseaseDTOs.isEmpty())
            return new DataResult<>(false, HttpStatus.NOT_FOUND,"Fethcing diseases data wasn't successful",null);
 
@@ -78,6 +94,30 @@ public class Service {
 
        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
     }
+
+//    public DataResult<SearchMedicalRecordResult> findById(int id) {
+//        CompletableFuture<PersonDTO> personResult;
+//        try {
+//            personResult = fetchById(PersonDTO[].class);
+//        } catch (Exception e){
+//            //throw new ResponseStatusException(HttpStatus.CONFLICT,"Fetching user data was unsuccessful!");
+//            return new DataResult<>(false,"Fetching user data was unsuccessful!",null);
+//        }
+//        CompletableFuture<DiseaseDTO> diseaseResult;
+//        try {
+//            diseaseResult =  fetchById(DiseaseDTO[].class);
+//        } catch (Exception e){
+//            return new DataResult<>(false, "Fetching diseases data was unsuccessful",null);
+//        }
+//        CompletableFuture.allOf(peopleResult,diseasesResult).join();
+//
+//    }
+
+//    public <T> CompletableFuture<T> fetchById(Class<T> className){
+//        RestTemplate restTemplate = new RestTemplate();
+//        String uri == className== PersonDTO.class ?
+//    }
+
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className){
         RestTemplate restTemplate = new RestTemplate();
