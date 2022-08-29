@@ -78,7 +78,7 @@ public class Service {
        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
     }
 
-    public DataResult<SearchMedicalRecordResult> findById(int id) throws ExecutionException, InterruptedException {
+    public DataResult<SearchMedicalRecordResult> findById(int id) {
         CompletableFuture<PersonDTO> personResult= fetchById(PersonDTO.class,id);
         CompletableFuture<DiseaseDTO> diseaseResult = fetchById(DiseaseDTO.class, id);
         CompletableFuture.allOf(personResult,diseaseResult).join();

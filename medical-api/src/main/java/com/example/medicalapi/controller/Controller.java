@@ -22,13 +22,13 @@ public class Controller {
 
     @GetMapping("/load")
     @Cacheable("data")
-    public ResponseEntity<DataResult<SearchMedicalRecordResult>> fetchAndLoad() throws ExecutionException, InterruptedException {
+    public ResponseEntity<DataResult<SearchMedicalRecordResult>> findAll() throws ExecutionException, InterruptedException {
         return service.findAll().intoResponseEntity();
     }
 
     @GetMapping("/person")
     @Cacheable("people")
-    public ResponseEntity<DataResult<SearchMedicalRecordResult>> getUserById(@RequestParam int id) throws ExecutionException, InterruptedException {
+    public ResponseEntity<DataResult<SearchMedicalRecordResult>> findById(@RequestParam int id) {
         return service.findById(id).intoResponseEntity();
     }
 
