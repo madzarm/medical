@@ -16,5 +16,5 @@ public class MedicalRecordDto {
     private String lastName;
     private float weight;
     private int age;
-    private List<String> diseases;
+    private List<DiseaseHistoryDto> diseaseHistories;
 }

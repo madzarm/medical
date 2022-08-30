@@ -1,72 +1,40 @@
 package com.demo.dummyapi.entity;
 
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
+@NoArgsConstructor
+@Data
 public class Person {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false)
-    private int userid;
+    private Long id;
 	private String name;
-
 	private String surname;
-
 	private int weight;
-
 	private int age;
+	@OneToMany(mappedBy = "person")
+	private List<DiseaseHistory> diseaseHistories = new ArrayList<>();
 
-	public Person() {
-
+	public Person(String name, String surname, int weight, int age, List<DiseaseHistory> diseaseHistories) {
+		this.name = name;
+		this.surname = surname;
+		this.weight = weight;
+		this.age = age;
+		this.diseaseHistories = diseaseHistories;
 	}
 
 	public Person(String name, String surname, int weight, int age) {
-		super();
 		this.name = name;
 		this.surname = surname;
 		this.weight = weight;
 		this.age = age;
 	}
-
-	public int getUserid() {
-		return userid;
-	}
-	public void setUserid(int userid) {
-		this.userid = userid;
-	}
-
-
-	public String getName() {
-		return name;
-	}
-
-	public String getSurname() {
-		return surname;
-	}
-
-	public int getWeight() {
-		return weight;
-	}
-
-	public int getAge() {
-		return age;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public void setSurname(String surname) {
-		this.surname = surname;
-	}
-
-	public void setWeight(int weight) {
-		this.weight = weight;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
-	}
-
 }

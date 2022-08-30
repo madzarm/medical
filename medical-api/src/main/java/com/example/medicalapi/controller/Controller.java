@@ -17,12 +17,11 @@ import java.util.concurrent.ExecutionException;
 public class Controller {
 
     private final Service service;
-    private final RestTemplate restTemplate;
+    //private final RestTemplate restTemplate;
 
     @Autowired
-    public Controller(Service service, RestTemplate restTemplate) {
+    public Controller(Service service) {
         this.service = service;
-        this.restTemplate = restTemplate;
     }
 
     @GetMapping("/load")
@@ -31,10 +30,10 @@ public class Controller {
         return service.findAll().intoResponseEntity();
     }
 
-    @GetMapping("/person")
-    @Cacheable("people")
-    public ResponseEntity<DataResult<SearchMedicalRecordResult>> findById(@RequestParam int id) {
-        return service.findById(id).intoResponseEntity();
-    }
+//    @GetMapping("/person")
+//    @Cacheable("person")
+//    public ResponseEntity<DataResult<SearchMedicalRecordResult>> findById(@RequestParam int id) {
+//        return service.findById(id).intoResponseEntity();
+//    }
 
 }
