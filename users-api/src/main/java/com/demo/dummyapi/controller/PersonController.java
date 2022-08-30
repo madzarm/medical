@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.demo.dummyapi.entity.Person;
+import org.springframework.web.client.RestTemplate;
 
 @RequestMapping(value = "/api")
 @RestController
@@ -19,11 +20,13 @@ public class PersonController {
 
 	private final RandomPersonService personService;
 	private final Repository repository;
+	private final RestTemplate restTemplate;
 
 	@Autowired
-	public PersonController(RandomPersonService personService, Repository repository){
+	public PersonController(RandomPersonService personService, Repository repository, RestTemplate restTemplate){
 		this.personService = personService;
 		this.repository = repository;
+		this.restTemplate = restTemplate;
 	}
 
 	@GetMapping(value = "/random")
