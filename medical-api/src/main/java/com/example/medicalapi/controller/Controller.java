@@ -47,7 +47,7 @@ public class Controller {
         else if (hasPersonIdSearch)
             return service.findByPersonId(personId).intoResponseEntity();
         else if(hasDiseaseIdSearch)
-            return new DataResult<>(false,"hasDiseaseId",null).intoResponseEntity();
+            return service.findByDiseaseId(diseaseId).intoResponseEntity();
         else if(hasLastNameSearch || hasFirstNameSearch)
             return new DataResult<>(false,"has name",null).intoResponseEntity();
         else return new DataResult<>(false,"has nothing",null).intoResponseEntity();
