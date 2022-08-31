@@ -105,7 +105,7 @@ public class Controller {
             return service.findByDiseaseName(diseaseName).intoResponseEntity();
         else if(hasLastNameSearch || hasFirstNameSearch)
             return new DataResult<>(false,"has name",null).intoResponseEntity();
-        else return new DataResult<>(false,"has nothing",null).intoResponseEntity();
+        else return service.findAll().intoResponseEntity();
     }
 
 
