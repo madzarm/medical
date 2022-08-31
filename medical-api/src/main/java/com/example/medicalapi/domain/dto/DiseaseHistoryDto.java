@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class DiseaseHistoryDto {
-    private int id;
     private LocalDate dateDiscovered;
     private String diseaseName;
+    private boolean curable;
 }

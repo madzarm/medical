@@ -1,21 +1,20 @@
-package com.example.medicalapi.domain.dto;
+package com.example.medicalapi.domain.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
-@Builder
-public class PersonDTO {
+@NoArgsConstructor
+@AllArgsConstructor
+public class PersonModel {
     private int id;
     private String name;
     private String surname;
     private int weight;
     private int age;
-    private List<DiseaseHistoryDto> diseaseHistories;
+    private List<DiseaseHistoryModel> diseaseHistories = new ArrayList<>();
 }
