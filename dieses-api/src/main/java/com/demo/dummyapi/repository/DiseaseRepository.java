@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface DiseaseRepository extends JpaRepository<Disease,Long> {
     List<Disease> getDiseaseByIdIn(List<Long> ids);
+    List<Disease> getDiseaseByNameStartingWith(String name);
 }

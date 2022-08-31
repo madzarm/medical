@@ -24,6 +24,10 @@ public class DiseaseService {
         return diseaseRepository.findById((long) id).orElse(null);
     }
 
+    public List<Disease> getDiseasesByName(String name){
+        return diseaseRepository.getDiseaseByNameStartingWith(name);
+    }
+
     public List<Disease> getDiseasesByIds(Integer[] ids){
         List<Long> longIds = Arrays.stream(ids).map(i -> (long) i).toList();
         return diseaseRepository.getDiseaseByIdIn(longIds);

@@ -34,6 +34,8 @@ public class Service {
     private String fetchDiseasesUri;
     @Value("${fetch.disease.endpoint.uri}")
     private String fetchDiseaseUri;
+    @Value("${fetch.disease.by-name.endpoint.uri}")
+    private String fetchDiseasesByNameUri;
     @Value("${api.diseases.name}")
     private String diseaseApiName;
     @Value("${api.users.name}")
@@ -72,23 +74,58 @@ public class Service {
     }
     public DataResult<SearchMedicalRecordResult> findByDiseaseId(int id) throws ExecutionException, InterruptedException {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
-        List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
         CompletableFuture<PersonModel[]> personModels = fetchById(PersonModel[].class,id);
+        CompletableFuture.allOf(diseaseModels,personModels).join();
+
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+        List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
         if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
-        else if (diseaseModelsList.get(0)==null)
+        else if (diseaseModelsList.isEmpty())
             throw new EmptyResponseException(diseaseApiName);
         return getResult(personModelsList,diseaseModelsList);
     }
 
-    @Async("taskExecutor")
+    public DataResult<SearchMedicalRecordResult> findByDiseaseName(String name) throws ExecutionException, InterruptedException {
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        CompletableFuture<PersonModel[]> personModels = fetchData(PersonModel[].class);
+        CompletableFuture.allOf(diseaseModels,personModels).join();
+
+        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+        List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
+
+        if (personModelsList.isEmpty())
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelsList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
+
+        List<Integer> ids = diseaseModelsList.stream().filter(d -> d.getName().equals(name)).map(DiseaseModel::getId).collect(Collectors.toList());
+        List<PersonModel> personModelsFiltered = personModelsList.stream()
+                .filter(p -> p.getDiseaseHistories().stream()
+                        .anyMatch(dh -> ids.contains(dh.getDiseaseId()))).collect(Collectors.toList());
+
+        return getResult(personModelsFiltered,diseaseModelsList);
+    }
+
     public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
+        return fetchData(className,id,null);
+    }
+
+    public <T> CompletableFuture<T> fetchByName(Class<T> className, String name){
+        return fetchData(className,null,name);
+    }
+
+    @Async("taskExecutor")
+    public <T> CompletableFuture<T> fetchData(Class<T> className, Integer id, String name){
         RestTemplate restTemplate = new RestTemplate();
-        System.out.println(className);
-        String uri = (className == PersonModel.class ? fetchPersonUri :
-                (className == PersonModel[].class ? fetchPersonByDiseaseUri : fetchDiseaseUri)) + id;
+        String uri;
+        if(id != null) {
+            uri = (className == PersonModel.class ? fetchPersonUri :
+                    (className == PersonModel[].class ? fetchPersonByDiseaseUri : fetchDiseaseUri)) + id;
+        } else {
+            uri = fetchDiseasesByNameUri + name;
+        }
         T response;
         System.out.println(uri);
         try {
@@ -101,6 +138,7 @@ public class Service {
         }
         return CompletableFuture.completedFuture(response);
     }
+
 //    @Async("taskExecutor")
 //    public List<DiseaseModel> fetchDiseasesById(List<Integer> ids){
 //        RestTemplate restTemplate = new RestTemplate();
