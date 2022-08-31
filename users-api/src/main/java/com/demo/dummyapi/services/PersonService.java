@@ -19,7 +19,9 @@ public class PersonService {
         this.diseaseHistoryRepository = diseaseHistoryRepository;
     }
 
-
+    public List<Person> getPeopleByDiseaseId(int id){
+        return personRepository.findAllByDiseaseHistoriesId((long)id);
+    }
     public List<Person> getPeople(){
         return personRepository.findAll();
     }

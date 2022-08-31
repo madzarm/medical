@@ -7,7 +7,6 @@ import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import com.example.medicalapi.domain.model.DiseaseHistoryModel;
 import com.example.medicalapi.domain.model.DiseaseModel;
 import com.example.medicalapi.domain.model.PersonModel;
-import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
@@ -25,11 +24,12 @@ import java.util.stream.Collectors;
 @org.springframework.stereotype.Service
 public class Service {
 
-    private final MedicalRecordRepository medicalRecordRepository;
     @Value("${fetch.people.endpoint.uri}")
     private String fetchPeopleUri;
     @Value("${fetch.person.endpoint.uri}")
     private String fetchPersonUri;
+    @Value("${fetch.person.by-disease.endpoint.uri}")
+    private String fetchPersonByDiseaseUri;
     @Value("${fetch.diseases.endpoint.uri}")
     private String fetchDiseasesUri;
     @Value("${fetch.disease.endpoint.uri}")
@@ -39,9 +39,6 @@ public class Service {
     @Value("${api.users.name}")
     private String usersApiName;
 
-    public Service(MedicalRecordRepository medicalRecordRepository) {
-        this.medicalRecordRepository = medicalRecordRepository;
-    }
 
     public DataResult<SearchMedicalRecordResult> findAll() throws ExecutionException, InterruptedException {
         CompletableFuture<PersonModel[]> personModels = fetchData(PersonModel[].class);
@@ -59,7 +56,6 @@ public class Service {
 
     }
 
-
     public DataResult<SearchMedicalRecordResult> findByPersonId(int id) throws ExecutionException, InterruptedException {
         CompletableFuture<PersonModel> personModel = fetchById(PersonModel.class,id);
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
@@ -68,13 +64,33 @@ public class Service {
         List<PersonModel> personModelsList = Collections.singletonList(personModel.get());
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
+        if (personModelsList.get(0)==null)
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelsList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
         return getResult(personModelsList, diseaseModelsList);
     }
+    public DataResult<SearchMedicalRecordResult> findByDiseaseId(int id) throws ExecutionException, InterruptedException {
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
+        CompletableFuture<PersonModel[]> personModels = fetchById(PersonModel[].class,id);
+        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+
+        if (personModelsList.isEmpty())
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelsList.get(0)==null)
+            throw new EmptyResponseException(diseaseApiName);
+        return getResult(personModelsList,diseaseModelsList);
+    }
+
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
         RestTemplate restTemplate = new RestTemplate();
-        String uri = (className== PersonModel.class ? fetchPersonUri : fetchDiseaseUri) + id;
+        System.out.println(className);
+        String uri = (className == PersonModel.class ? fetchPersonUri :
+                (className == PersonModel[].class ? fetchPersonByDiseaseUri : fetchDiseaseUri)) + id;
         T response;
+        System.out.println(uri);
         try {
             response = restTemplate.getForObject(uri, className);
         }
