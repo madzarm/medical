@@ -28,4 +28,8 @@ public class PersonController {
 	public Person getPerson(@PathVariable("id") int id) {
 		return personService.getPerson(id);
 	}
+	@GetMapping(value = "/person/disease/{id}")
+	public List<Person> getPeopleByDiseaseId(@PathVariable("id") int id){
+		return personService.getPeopleByDiseaseId(id);
+	}
 }

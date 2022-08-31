@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class DiseaseService {
@@ -19,6 +18,14 @@ public class DiseaseService {
 
     public List<Disease> getAllDiseases(){
         return diseaseRepository.findAll();
+    }
+
+    public Disease getDiseaseById(int id){
+        return diseaseRepository.findById((long) id).orElse(null);
+    }
+
+    public List<Disease> getDiseasesByName(String name){
+        return diseaseRepository.getDiseaseByNameStartingWith(name);
     }
 
     public List<Disease> getDiseasesByIds(Integer[] ids){
