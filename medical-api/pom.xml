@@ -14,7 +14,7 @@
     <name>medical-api</name>
     <description>medical-api</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>14</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -127,6 +127,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
             <version>2.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.6.4</version>
         </dependency>
 
 <!--        <dependency>-->
