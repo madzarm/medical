@@ -32,27 +32,6 @@ public class Controller {
         return service.findAll().intoResponseEntity();
     }
 
-    @GetMapping("/api-docs/users")
-    private String getusers()
-    {
-        final String uri = "http://localhost:8081/api-docs";
-
-        RestTemplate restTemplate = new RestTemplate();
-        String result = restTemplate.getForObject(uri, String.class);
-
-        return result;
-    }
-
-    @GetMapping("/api-docs/diseases")
-    private String getdiseases()
-    {
-        final String uri = "http://localhost:8082/api-docs";
-
-        RestTemplate restTemplate = new RestTemplate();
-        String result = restTemplate.getForObject(uri, String.class);
-
-        return result;
-    }
     @GetMapping("/medical-record")
     @Cacheable("person")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findMedicalRecords(

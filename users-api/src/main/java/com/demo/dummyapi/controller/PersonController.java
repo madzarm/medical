@@ -6,6 +6,7 @@ import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequestMapping(value = "/api")
 @RestController
@@ -25,8 +26,13 @@ public class PersonController {
 	public List<Person> getPeople(@RequestBody GetPeopleByDiseaseIdsRequest request) {
 		return personService.getPeopleByDiseaseIds(request);
 	}
+
 	@GetMapping(value = "/person/{id}")
-	public Person getPersonById(@PathVariable("id") int id){
+	public Person getPerson(@PathVariable("id") int id) {
 		return personService.getPerson(id);
+	}
+	@GetMapping(value = "/person/disease/{id}")
+	public List<Person> getPeopleByDiseaseId(@PathVariable("id") int id){
+		return personService.getPeopleByDiseaseId(id);
 	}
 }
