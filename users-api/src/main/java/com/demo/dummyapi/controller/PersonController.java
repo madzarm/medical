@@ -2,10 +2,8 @@ package com.demo.dummyapi.controller;
 
 import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.services.PersonService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +20,11 @@ public class PersonController {
 	@GetMapping("/people")
 	public List<Person> getPeople() {
 		return personService.getPeople();
+	}
+
+	@PostMapping("/people")
+	public List<Person> getPeople(@RequestBody GetPeopleByDiseaseIdsRequest request) {
+		return personService.getPeopleByDiseaseIds(request);
 	}
 
 	@GetMapping(value = "/person/{id}")

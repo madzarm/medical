@@ -10,6 +10,7 @@ import com.example.medicalapi.domain.model.PersonModel;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
+import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,23 +90,18 @@ public class Service {
 
     public DataResult<SearchMedicalRecordResult> findByDiseaseName(String name) throws ExecutionException, InterruptedException {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
-        CompletableFuture<PersonModel[]> personModels = fetchData(PersonModel[].class);
-        CompletableFuture.allOf(diseaseModels,personModels).join();
-
-        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
+        int[] ids = diseaseModelsList.stream().filter(d -> d.getName().contains(name)).map(DiseaseModel::getId).mapToInt(d -> d).toArray();
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByIds(ids);
+        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+
 
         if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
         else if (diseaseModelsList.isEmpty())
             throw new EmptyResponseException(diseaseApiName);
 
-        List<Integer> ids = diseaseModelsList.stream().filter(d -> d.getName().equals(name)).map(DiseaseModel::getId).collect(Collectors.toList());
-        List<PersonModel> personModelsFiltered = personModelsList.stream()
-                .filter(p -> p.getDiseaseHistories().stream()
-                        .anyMatch(dh -> ids.contains(dh.getDiseaseId()))).collect(Collectors.toList());
-
-        return getResult(personModelsFiltered,diseaseModelsList);
+        return getResult(personModelsList,diseaseModelsList);
     }
 
     public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
@@ -115,7 +111,19 @@ public class Service {
     public <T> CompletableFuture<T> fetchByName(Class<T> className, String name){
         return fetchData(className,null,name);
     }
-
+    public CompletableFuture<PersonModel[]> fetchPeopleByIds(int[] ids){
+        RestTemplate restTemplate = new RestTemplate();
+        String uri = fetchPeopleUri;
+        PersonModel[] response;
+        GetPeopleByIdsBody body = new GetPeopleByIdsBody(Arrays.stream(ids).boxed().toArray(Integer[]::new));
+        try {
+            response = restTemplate.postForObject(uri,body,PersonModel[].class);
+        }
+        catch (Exception e){
+            throw new UsersApiConnectionRefusedException();
+        }
+        return CompletableFuture.completedFuture(response);
+    }
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className, Integer id, String name){
         RestTemplate restTemplate = new RestTemplate();
