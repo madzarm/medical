@@ -4,9 +4,8 @@ import java.util.List;
 
 import com.demo.dummyapi.entity.Disease;
 import com.demo.dummyapi.services.DiseaseService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.demo.dummyapi.services.GetDiseasesRequest;
+import org.springframework.web.bind.annotation.*;
 
 
 @RequestMapping(value = "/api")
@@ -20,8 +19,13 @@ public class DiseaseController {
 	}
 
 	@GetMapping("/diseases")
-	public List<Disease> getAllDiseases() {
+	public List<Disease> getDiseases() {
 		return diseaseService.getAllDiseases();
+	}
+
+	@PostMapping("diseases")
+	public List<Disease> getDiseases(@RequestBody GetDiseasesRequest request) {
+		return diseaseService.getDiseasesByIds(request.getIds());
 	}
 
 }

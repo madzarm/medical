@@ -9,6 +9,7 @@ import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
+import com.example.medicalapi.service.request.GetDiseasesRequest;
 import com.example.medicalapi.service.response.DiseaseHistoryResponse;
 import com.example.medicalapi.service.response.DiseaseResponse;
 import com.example.medicalapi.service.response.PersonResponse;
@@ -69,10 +70,23 @@ public class Service {
 
     }
 
-    @Async("taskExecutor")
-    public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
+    public DataResult<SearchMedicalRecordResult> findById(int id){
+        PersonResponse personResponse = fetchById(PersonResponse.class,id);
+
+        List<Integer> ids = personResponse.getDiseaseHistories().stream().map(DiseaseHistoryResponse::getDiseaseId).collect(Collectors.toList());
+        List<DiseaseResponse> diseaseResponses = fetchDiseasesById(ids);
+
+        List<MedicalRecord> medicalRecords = createMedicalRecords(List.of(personResponse),diseaseResponses);
+        SearchMedicalRecordResult searchMedicalRecordResult = new SearchMedicalRecordResult();
+        List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
+        searchMedicalRecordResult.setMedicalRecords(medicalRecordDtos);
+
+        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
+    }
+
+    public <T> T fetchById(Class<T> className, int id){
         RestTemplate restTemplate = new RestTemplate();
-        String uri = (className== PersonDTO.class ? fetchPersonUri : fetchDiseaseUri) + id;
+        String uri = (className== PersonResponse.class ? fetchPersonUri : fetchDiseaseUri) + id;
         T response;
         try {
             response = restTemplate.getForObject(uri, className);
@@ -82,7 +96,18 @@ public class Service {
                 throw new UsersApiConnectionRefusedException();
             throw new DiseasesApiConnectionRefusedException();
         }
-        return CompletableFuture.completedFuture(response);
+        return response;
+    }
+
+    public List<DiseaseResponse> fetchDiseasesById(List<Integer> ids){
+        RestTemplate restTemplate = new RestTemplate();
+        String uri = "http://localhost:8082/api/diseases";
+        int[] intIds = ids.stream().mapToInt(Integer::intValue).toArray();
+        GetDiseasesRequest getDiseasesRequest = new GetDiseasesRequest(intIds);
+        DiseaseResponse[] diseaseResponses = restTemplate.postForObject(uri, getDiseasesRequest,DiseaseResponse[].class);
+        if(diseaseResponses!=null)
+            return Arrays.stream(diseaseResponses).collect(Collectors.toList());
+        return new ArrayList<>();
     }
 
     @Async("taskExecutor")
