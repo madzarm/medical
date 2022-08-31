@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GetPeopleByDiseaseIdsRequest {
+public class GetDiseasesByIdsRequest {
     private Integer[] ids;
 }

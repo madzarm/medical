@@ -10,6 +10,7 @@ import com.example.medicalapi.domain.model.PersonModel;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
+import com.example.medicalapi.service.body.GetDiseasesByIdsBody;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
@@ -26,13 +27,15 @@ import java.util.stream.Collectors;
 public class Service {
 
     @Value("${fetch.people.endpoint.uri}")
-    private String fetchPeopleUri;
-    @Value("${fetch.person.endpoint.uri}")
-    private String fetchPersonUri;
+    private String fetchAllPeopleUri;
+    @Value("${fetch.people.by-id.endpoint.uri}")
+    private String fetchPeopleByIdUri;
     @Value("${fetch.person.by-disease.endpoint.uri}")
     private String fetchPersonByDiseaseUri;
+    @Value("${fetch.person.by-id.endpoint.uri}")
+    private String fetchPersonByIdUri;
     @Value("${fetch.diseases.endpoint.uri}")
-    private String fetchDiseasesUri;
+    private String fetchAllDiseasesUri;
     @Value("${fetch.disease.endpoint.uri}")
     private String fetchDiseaseUri;
     @Value("${fetch.disease.by-name.endpoint.uri}")
@@ -44,8 +47,8 @@ public class Service {
 
 
     public DataResult<SearchMedicalRecordResult> findAll() throws ExecutionException, InterruptedException {
-        CompletableFuture<PersonModel[]> personModels = fetchData(PersonModel[].class);
-        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        CompletableFuture<PersonModel[]> personModels = fetchAllPeopleData();
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         CompletableFuture.allOf(diseaseModels,personModels).join();
 
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
@@ -60,26 +63,26 @@ public class Service {
     }
 
     public DataResult<SearchMedicalRecordResult> findByPersonId(int id) throws ExecutionException, InterruptedException {
-        CompletableFuture<PersonModel> personModel = fetchById(PersonModel.class,id);
-        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        CompletableFuture<PersonModel> personModel = fetchPersonById(id);
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         CompletableFuture.allOf(personModel,diseaseModels).join();
 
-        List<PersonModel> personModelsList = Collections.singletonList(personModel.get());
+        List<PersonModel> personModelsList = Arrays.asList(personModel.get());
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
-        if (personModelsList.get(0)==null)
+        if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
         else if (diseaseModelsList.isEmpty())
             throw new EmptyResponseException(diseaseApiName);
         return getResult(personModelsList, diseaseModelsList);
     }
     public DataResult<SearchMedicalRecordResult> findByDiseaseId(int id) throws ExecutionException, InterruptedException {
-        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
-        CompletableFuture<PersonModel[]> personModels = fetchById(PersonModel[].class,id);
-        CompletableFuture.allOf(diseaseModels,personModels).join();
-
-        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
+        int[] ids = {id};
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByIds(ids);
+        List<PersonModel> personModelsList = Arrays.asList(personModels.get());
+
 
         if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
@@ -89,7 +92,7 @@ public class Service {
     }
 
     public DataResult<SearchMedicalRecordResult> findByDiseaseName(String name) throws ExecutionException, InterruptedException {
-        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
         int[] ids = diseaseModelsList.stream().filter(d -> d.getName().contains(name)).map(DiseaseModel::getId).mapToInt(d -> d).toArray();
         CompletableFuture<PersonModel[]> personModels = fetchPeopleByIds(ids);
@@ -103,76 +106,49 @@ public class Service {
 
         return getResult(personModelsList,diseaseModelsList);
     }
-
-    public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
-        return fetchData(className,id,null);
-    }
-
-    public <T> CompletableFuture<T> fetchByName(Class<T> className, String name){
-        return fetchData(className,null,name);
-    }
-    public CompletableFuture<PersonModel[]> fetchPeopleByIds(int[] ids){
-        RestTemplate restTemplate = new RestTemplate();
-        String uri = fetchPeopleUri;
-        PersonModel[] response;
-        GetPeopleByIdsBody body = new GetPeopleByIdsBody(Arrays.stream(ids).boxed().toArray(Integer[]::new));
-        try {
-            response = restTemplate.postForObject(uri,body,PersonModel[].class);
-        }
-        catch (Exception e){
-            throw new UsersApiConnectionRefusedException();
-        }
-        return CompletableFuture.completedFuture(response);
-    }
     @Async("taskExecutor")
-    public <T> CompletableFuture<T> fetchData(Class<T> className, Integer id, String name){
+    public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
         RestTemplate restTemplate = new RestTemplate();
-        String uri;
-        if(id != null) {
-            uri = (className == PersonModel.class ? fetchPersonUri :
-                    (className == PersonModel[].class ? fetchPersonByDiseaseUri : fetchDiseaseUri)) + id;
-        } else {
-            uri = fetchDiseasesByNameUri + name;
-        }
-        T response;
-        System.out.println(uri);
+        DiseaseModel[] response;
         try {
-            response = restTemplate.getForObject(uri, className);
-        }
-        catch (Exception e){
-            if(className == PersonModel.class)
-                throw new UsersApiConnectionRefusedException();
+            response = restTemplate.getForObject(fetchAllDiseasesUri, DiseaseModel[].class);
+        } catch (Exception e) {
             throw new DiseasesApiConnectionRefusedException();
         }
         return CompletableFuture.completedFuture(response);
     }
-
-//    @Async("taskExecutor")
-//    public List<DiseaseModel> fetchDiseasesById(List<Integer> ids){
-//        RestTemplate restTemplate = new RestTemplate();
-//        String uri = "http://localhost:8082/api/diseases";
-//        int[] intIds = ids.stream().mapToInt(Integer::intValue).toArray();
-//        GetDiseasesRequest getDiseasesRequest = new GetDiseasesRequest(intIds);
-//        DiseaseModel[] diseaseModels = restTemplate.postForObject(uri, getDiseasesRequest,DiseaseModel[].class);
-//        if(diseaseModels!=null)
-//            return Arrays.stream(diseaseModels).collect(Collectors.toList());
-//        return new ArrayList<>();
-//    }
-
     @Async("taskExecutor")
-    public <T> CompletableFuture<T> fetchData(Class<T> className){
+    public CompletableFuture<PersonModel[]> fetchAllPeopleData(){
         RestTemplate restTemplate = new RestTemplate();
-        String uri = className == PersonModel[].class ? fetchPeopleUri : fetchDiseasesUri;
-        T response;
+        PersonModel[] response;
         try {
-            response = restTemplate.getForObject(uri, className);
+            response = restTemplate.getForObject(fetchAllPeopleUri, PersonModel[].class);
         } catch (Exception e) {
-           if(className == PersonModel[].class)
-               throw new UsersApiConnectionRefusedException();
-           throw new DiseasesApiConnectionRefusedException();
+            throw new DiseasesApiConnectionRefusedException();
         }
         return CompletableFuture.completedFuture(response);
     }
+    @Async("taskExecutor")
+    public CompletableFuture<PersonModel> fetchPersonById(int id){
+        RestTemplate restTemplate = new RestTemplate();
+        PersonModel response;
+        String uri = fetchPersonByIdUri + id;
+        System.out.println(uri);
+        response = restTemplate.getForObject(uri, PersonModel.class);
+
+        return CompletableFuture.completedFuture(response);
+    }
+    @Async("taskExecutor")
+    public CompletableFuture<PersonModel[]> fetchPeopleByIds(int[] ids){
+        RestTemplate restTemplate = new RestTemplate();
+        PersonModel[] response;
+        GetPeopleByIdsBody body = new GetPeopleByIdsBody(Arrays.stream(ids).boxed().toArray(Integer[]::new));
+
+        response = restTemplate.postForObject(fetchPeopleByIdUri,body,PersonModel[].class);
+
+        return CompletableFuture.completedFuture(response);
+    }
+
     private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {
         List<MedicalRecordDto> medicalRecordDtos = createMedicalRecordDtos(personModelsList,diseaseModelsList);
 
@@ -241,4 +217,5 @@ public class Service {
                     .curable(dh.isCurable()).build()
          ).collect(Collectors.toList());
     }
+
 }

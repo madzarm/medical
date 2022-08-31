@@ -53,33 +53,6 @@ public class Controller {
 
         return result;
     }
-
-    @GetMapping("/docs")
-    @ResponseBody
-    public String servers(){
-        JSONObject server = new JSONObject();
-        JSONObject url = new JSONObject();
-        JSONObject url1 = new JSONObject();
-        JSONObject url2 = new JSONObject();
-        JSONObject info = new JSONObject();
-        ArrayList megaurl = new ArrayList();
-        url.put("url", "http://localhost:8082/");
-        url.put("description", "Dieses");
-        url1.put("url", "http://localhost:8081/");
-        url1.put("description", "Users");
-        url2.put("url", "http://localhost:8080/api/v1/");
-        url2.put("description", "Main");
-        megaurl.add(url);
-        megaurl.add(url1);
-        megaurl.add(url2);
-        info.append("title","OpenAPI definition");
-        info.append("version","1");
-        server.put("info", info);
-        server.put("openapi", "3.0.1");
-        server.put("servers", megaurl);
-        String response = server.toString();
-        return response;
-    }
     @GetMapping("/medical-record")
     @Cacheable("person")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findMedicalRecords(

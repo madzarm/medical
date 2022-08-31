@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GetPeopleByIdsBody {
-    Integer[] ids;
+    private Integer[] ids;
 }
