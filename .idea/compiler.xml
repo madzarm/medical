@@ -15,7 +15,7 @@
     <bytecodeTargetLevel>
       <module name="dummyapi" target="11" />
       <module name="dummyapi (1)" target="17" />
-      <module name="medical-api" target="11" />
+      <module name="medical-api" target="14" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

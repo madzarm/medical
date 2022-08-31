@@ -35,7 +35,7 @@ public class Controller {
             @RequestParam(required = false) Integer diseaseId,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName
-    ) {
+    ) throws ExecutionException, InterruptedException {
         boolean hasPersonIdSearch = Objects.nonNull(personId);
         boolean hasDiseaseIdSearch = Objects.nonNull(diseaseId);
         boolean hasFirstNameSearch = Objects.nonNull(firstName);

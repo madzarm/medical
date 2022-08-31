@@ -11,17 +11,13 @@ import com.example.medicalapi.domain.repository.MedicalRecordRepository;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
-import com.example.medicalapi.service.request.GetDiseasesRequest;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -59,31 +55,23 @@ public class Service {
            throw new EmptyResponseException(usersApiName);
        else if (diseaseModelsList.isEmpty())
            throw new EmptyResponseException(diseaseApiName);
-       List<MedicalRecord> medicalRecords = createMedicalRecords(personModelsList,diseaseModelsList);
-
-       SearchMedicalRecordResult searchMedicalRecordResult = new SearchMedicalRecordResult();
-       List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
-       searchMedicalRecordResult.setMedicalRecords(medicalRecordDtos);
-
-       return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
+        return getResult(personModelsList, diseaseModelsList);
 
     }
 
-    public DataResult<SearchMedicalRecordResult> findByPersonId(int id){
-        PersonModel personModel = fetchById(PersonModel.class,id);
 
-        List<Integer> ids = personModel.getDiseaseHistories().stream().map(DiseaseHistoryModel::getDiseaseId).collect(Collectors.toList());
-        List<DiseaseModel> diseaseModels = fetchDiseasesById(ids);
+    public DataResult<SearchMedicalRecordResult> findByPersonId(int id) throws ExecutionException, InterruptedException {
+        CompletableFuture<PersonModel> personModel = fetchById(PersonModel.class,id);
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchData(DiseaseModel[].class);
+        CompletableFuture.allOf(personModel,diseaseModels).join();
 
-        List<MedicalRecord> medicalRecords = createMedicalRecords(List.of(personModel),diseaseModels);
-        SearchMedicalRecordResult searchMedicalRecordResult = new SearchMedicalRecordResult();
-        List<MedicalRecordDto> medicalRecordDtos = mapToDto(medicalRecords);
-        searchMedicalRecordResult.setMedicalRecords(medicalRecordDtos);
+        List<PersonModel> personModelsList = Collections.singletonList(personModel.get());
+        List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
-        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
+        return getResult(personModelsList, diseaseModelsList);
     }
-
-    public <T> T fetchById(Class<T> className, int id){
+    @Async("taskExecutor")
+    public <T> CompletableFuture<T> fetchById(Class<T> className, int id){
         RestTemplate restTemplate = new RestTemplate();
         String uri = (className== PersonModel.class ? fetchPersonUri : fetchDiseaseUri) + id;
         T response;
@@ -95,19 +83,19 @@ public class Service {
                 throw new UsersApiConnectionRefusedException();
             throw new DiseasesApiConnectionRefusedException();
         }
-        return response;
+        return CompletableFuture.completedFuture(response);
     }
-
-    public List<DiseaseModel> fetchDiseasesById(List<Integer> ids){
-        RestTemplate restTemplate = new RestTemplate();
-        String uri = "http://localhost:8082/api/diseases";
-        int[] intIds = ids.stream().mapToInt(Integer::intValue).toArray();
-        GetDiseasesRequest getDiseasesRequest = new GetDiseasesRequest(intIds);
-        DiseaseModel[] diseaseModels = restTemplate.postForObject(uri, getDiseasesRequest,DiseaseModel[].class);
-        if(diseaseModels!=null)
-            return Arrays.stream(diseaseModels).collect(Collectors.toList());
-        return new ArrayList<>();
-    }
+//    @Async("taskExecutor")
+//    public List<DiseaseModel> fetchDiseasesById(List<Integer> ids){
+//        RestTemplate restTemplate = new RestTemplate();
+//        String uri = "http://localhost:8082/api/diseases";
+//        int[] intIds = ids.stream().mapToInt(Integer::intValue).toArray();
+//        GetDiseasesRequest getDiseasesRequest = new GetDiseasesRequest(intIds);
+//        DiseaseModel[] diseaseModels = restTemplate.postForObject(uri, getDiseasesRequest,DiseaseModel[].class);
+//        if(diseaseModels!=null)
+//            return Arrays.stream(diseaseModels).collect(Collectors.toList());
+//        return new ArrayList<>();
+//    }
 
     @Async("taskExecutor")
     public <T> CompletableFuture<T> fetchData(Class<T> className){
@@ -123,11 +111,32 @@ public class Service {
         }
         return CompletableFuture.completedFuture(response);
     }
+    private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {
+        List<MedicalRecordDto> medicalRecordDtos = createMedicalRecordDtos(personModelsList,diseaseModelsList);
 
-    private List<MedicalRecord> createMedicalRecords(List<PersonModel> personResponses, List<DiseaseModel> diseaseModels){
-        return personResponses.stream().map(p -> {
+        SearchMedicalRecordResult searchMedicalRecordResult = new SearchMedicalRecordResult();
+        searchMedicalRecordResult.setMedicalRecords(medicalRecordDtos);
 
-            List<DiseaseHistory> diseaseHistories = responseToDiseaseHistory(p.getDiseaseHistories(),diseaseModels);
+        return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
+    }
+
+    private List<MedicalRecordDto> createMedicalRecordDtos(List<PersonModel> personModels, List<DiseaseModel> diseaseModels){
+        return personModels.stream().map(p -> {
+            List<DiseaseHistory> diseaseHistories = modelToDiseaseHistory(p.getDiseaseHistories(),diseaseModels);
+
+            return MedicalRecordDto.builder()
+                    .diseaseHistories(mapDiseaseHistoryToDto(diseaseHistories))
+                    .firstName(p.getName())
+                    .lastName(p.getSurname())
+                    .age(p.getAge())
+                    .weight(p.getWeight()).build();
+        }).collect(Collectors.toList());
+    }
+
+    private List<MedicalRecord> createMedicalRecords(List<PersonModel> personModels, List<DiseaseModel> diseaseModels){
+        return personModels.stream().map(p -> {
+
+            List<DiseaseHistory> diseaseHistories = modelToDiseaseHistory(p.getDiseaseHistories(),diseaseModels);
 
             return MedicalRecord.builder()
                     .diseaseHistories(diseaseHistories)
@@ -139,7 +148,7 @@ public class Service {
         }).collect(Collectors.toList());
     }
 
-    private List<DiseaseHistory> responseToDiseaseHistory
+    private List<DiseaseHistory> modelToDiseaseHistory
             (List<DiseaseHistoryModel> diseaseHistoryModels, List<DiseaseModel> diseaseModels){
         return diseaseHistoryModels.stream().map(dh -> {
             Optional<DiseaseModel> diseaseOptional = diseaseModels.stream().filter(dr -> dr.getId() == dh.getDiseaseId()).findFirst();
@@ -151,8 +160,7 @@ public class Service {
         }).collect(Collectors.toList());
     }
 
-
-    private List<MedicalRecordDto> mapToDto(List<MedicalRecord> medicalRecords){
+    private List<MedicalRecordDto> mapMedicalRecordToDto(List<MedicalRecord> medicalRecords){
         return medicalRecords.stream().map(m ->
             MedicalRecordDto.builder()
                     .age(m.getAge())
