@@ -1,4 +1,4 @@
-package com.example.medicalapi.service.result;
+package com.demo.dummyapi.services.result;
 
 
 import org.springframework.http.HttpStatus;
@@ -9,9 +9,6 @@ public class ActionResult {
     private boolean success;
     private HttpStatus status;
     private String message;
-
-    public ActionResult() {
-    }
 
     public ActionResult(boolean success, HttpStatus status, String message) {
         this.success = success;

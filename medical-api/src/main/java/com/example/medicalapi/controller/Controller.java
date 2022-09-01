@@ -1,6 +1,8 @@
 package com.example.medicalapi.controller;
 
 import com.example.medicalapi.service.Service;
+import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
+import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -28,6 +31,11 @@ public class Controller {
     @Cacheable("people")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findAll() throws ExecutionException, InterruptedException {
         return service.findAll().intoResponseEntity();
+    }
+    //novi medical-record
+    @PostMapping("/medical-record")
+    public ResponseEntity<ActionResult> createMedicalRecord(@Valid @RequestBody CreateMedicalRecordRequest request) throws ExecutionException, InterruptedException {
+        return service.createMedicalRecord(request).intoResponseEntity();
     }
 
     @GetMapping("/medical-record")

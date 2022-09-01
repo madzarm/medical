@@ -13,6 +13,8 @@ import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedExce
 import com.example.medicalapi.service.body.GetPeopleByDiseaseHistoryDate;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.body.GetPeopleByNameBody;
+import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
+import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,8 @@ public class Service {
     private String fetchPeopleByDiseaseIdsUri;
     @Value("${fetch.people.by-name.endpoint.uri}")
     private String fetchPeopleByNameUri;
+    @Value("${create.person.endpoint.uri}")
+    private String createPersonUri;
     @Value("${fetch.people.by-date.endpoint.uri}")
     private String fetchPeopleByDateUri;
     @Value("${fetch.person.by-id.endpoint.uri}")
@@ -122,6 +126,18 @@ public class Service {
         List<PersonModel> personModelList = Arrays.asList(personModels.get());
         return getResult(personModelList,diseaseModelList);
     }
+    public ActionResult createMedicalRecord(CreateMedicalRecordRequest request) throws ExecutionException, InterruptedException {
+        //prvo vidjeti ako postoje ti id-evi diseasea
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
+        List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
+        if(diseaseModelList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
+
+        request.getDiseaseIds().retainAll(diseaseModelList.stream().map(DiseaseModel::getId).collect(Collectors.toList()));
+        if(request.getDiseaseIds().isEmpty())
+            return new ActionResult(false, "Diseases with those ids do not exist!");
+        return createPerson(request);
+    }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
         RestTemplate restTemplate = new RestTemplate();
@@ -181,7 +197,10 @@ public class Service {
         response = restTemplate.postForObject(fetchPeopleByDateUri,body, PersonModel[].class);
         return CompletableFuture.completedFuture(response);
     }
-
+    public ActionResult createPerson(CreateMedicalRecordRequest request) {
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.postForObject(createPersonUri,request, ActionResult.class);
+    }
 
     private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {
         List<MedicalRecordDto> medicalRecordDtos = createMedicalRecordDtos(personModelsList,diseaseModelsList);

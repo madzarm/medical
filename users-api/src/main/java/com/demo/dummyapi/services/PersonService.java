@@ -1,10 +1,14 @@
 package com.demo.dummyapi.services;
 
+import com.demo.dummyapi.entity.DiseaseHistory;
 import com.demo.dummyapi.entity.Person;
+import com.demo.dummyapi.repository.DiseaseHistoryRepository;
 import com.demo.dummyapi.repository.PersonRepository;
+import com.demo.dummyapi.services.request.CreateMedicalRecordRequst;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseHistoryDate;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
 import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
+import com.demo.dummyapi.services.result.ActionResult;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,8 +20,10 @@ import java.util.stream.Collectors;
 public class PersonService {
 
     private final PersonRepository personRepository;
-    public PersonService(PersonRepository personRepository) {
+    private final DiseaseHistoryRepository diseaseHistoryRepository;
+    public PersonService(PersonRepository personRepository, DiseaseHistoryRepository diseaseHistoryRepository) {
         this.personRepository = personRepository;
+        this.diseaseHistoryRepository = diseaseHistoryRepository;
     }
 
     public List<Person> getPeopleByDiseaseId(int id){
@@ -58,4 +64,24 @@ public class PersonService {
             return personRepository.findAllDistinctByDiseaseHistoriesDateDiscoveredAfter(from);
         return personRepository.findAllDistinctByDiseaseHistoriesDateDiscoveredBefore(to);
     }
+
+    public ActionResult createMedicalRecord(CreateMedicalRecordRequst request) {
+        List<DiseaseHistory> diseaseHistories = request.getDiseaseIds().stream()
+                .map(id -> DiseaseHistory.builder()
+                        .dateDiscovered(LocalDate.now())
+                        .diseaseId((long)id).build()
+                ).collect(Collectors.toList());
+        Person person = Person.builder()
+                .age(request.getAge())
+                .weight(request.getWeight())
+                .surname(request.getLastName())
+                .name(request.getFirstName()).build();
+        person.setDiseaseHistories(diseaseHistories);
+
+        personRepository.save(person);
+        diseaseHistoryRepository.saveAll(diseaseHistories);
+
+        return new ActionResult(true, "Successfully created a medical record!");
+    }
+
 }

@@ -1,6 +1,8 @@
 package com.demo.dummyapi.entity;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,8 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @Data
+@AllArgsConstructor
+@Builder
 public class Person {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,5 +40,10 @@ public class Person {
 		this.surname = surname;
 		this.weight = weight;
 		this.age = age;
+	}
+
+	public void setDiseaseHistories(List<DiseaseHistory> diseaseHistories) {
+		this.diseaseHistories = diseaseHistories;
+		diseaseHistories.forEach(dh -> dh.setPerson(this));
 	}
 }
