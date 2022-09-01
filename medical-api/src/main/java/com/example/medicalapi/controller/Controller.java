@@ -5,9 +5,11 @@ import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -35,15 +37,20 @@ public class Controller {
             @RequestParam(required = false) Integer diseaseId,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String diseaseName
-    ) throws ExecutionException, InterruptedException {
+            @RequestParam(required = false) String diseaseName,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate to
+            ) throws ExecutionException, InterruptedException {
+
         boolean hasPersonIdSearch = Objects.nonNull(personId);
         boolean hasDiseaseIdSearch = Objects.nonNull(diseaseId);
-        boolean hasFirstNameSearch = Objects.nonNull(firstName);
-        boolean hasLastNameSearch = Objects.nonNull(lastName);
+        boolean hasNameSearch = Objects.nonNull(firstName) || Objects.nonNull(lastName);
         boolean hasDiseaseNameSearch = Objects.nonNull(diseaseName);
+        boolean hasDateSearch = Objects.nonNull(from) || Objects.nonNull(to);
 
-        if(hasPersonIdSearch ? (hasDiseaseNameSearch || hasDiseaseIdSearch || hasFirstNameSearch || hasLastNameSearch) : (hasDiseaseIdSearch ? (hasFirstNameSearch || hasLastNameSearch || hasDiseaseNameSearch) : (hasDiseaseNameSearch && (hasFirstNameSearch || hasLastNameSearch)) ))
+        if(hasPersonIdSearch ? (hasDiseaseNameSearch || hasDiseaseIdSearch || hasNameSearch) :
+                (hasDiseaseIdSearch ? (hasNameSearch || hasDiseaseNameSearch) :
+                        (hasDiseaseNameSearch ?(hasNameSearch || hasDateSearch) : (hasDateSearch && hasNameSearch))))
             return new DataResult<>(false,"bad",null).intoResponseEntity();
         else if (hasPersonIdSearch)
             return service.findByPersonId(personId).intoResponseEntity();
@@ -51,7 +58,9 @@ public class Controller {
             return service.findByDiseaseId(diseaseId).intoResponseEntity();
         else if(hasDiseaseNameSearch)
             return service.findByDiseaseName(diseaseName).intoResponseEntity();
-        else if(hasLastNameSearch || hasFirstNameSearch)
+        else if(hasDateSearch)
+            return service.findByDate(from,to).intoResponseEntity();
+        else if(hasNameSearch)
             return service.findByName(firstName,lastName).intoResponseEntity();
         else return service.findAll().intoResponseEntity();
     }

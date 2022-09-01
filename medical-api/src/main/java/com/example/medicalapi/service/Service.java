@@ -10,14 +10,17 @@ import com.example.medicalapi.domain.model.PersonModel;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
+import com.example.medicalapi.service.body.GetPeopleByDiseaseHistoryDate;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.request.GetPeopleByNameRequest;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,6 +35,8 @@ public class Service {
     private String fetchPeopleByDiseaseIdsUri;
     @Value("${fetch.people.by-name.endpoint.uri}")
     private String fetchPeopleByNameUri;
+    @Value("${fetch.people.by-date.endpoint.uri}")
+    private String fetchPeopleByDateUri;
     @Value("${fetch.person.by-id.endpoint.uri}")
     private String fetchPersonByIdUri;
     @Value("${fetch.diseases.endpoint.uri}")
@@ -41,23 +46,21 @@ public class Service {
     @Value("${api.users.name}")
     private String usersApiName;
 
-
     public DataResult<SearchMedicalRecordResult> findAll() throws ExecutionException, InterruptedException {
         CompletableFuture<PersonModel[]> personModels = fetchAllPeopleData();
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
-        CompletableFuture.allOf(diseaseModels,personModels).join();
+        CompletableFuture.allOf(diseaseModels, personModels).join();
 
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
-        if(personModelsList.isEmpty())
-           throw new EmptyResponseException(usersApiName);
-       else if (diseaseModelsList.isEmpty())
-           throw new EmptyResponseException(diseaseApiName);
+        if (personModelsList.isEmpty())
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelsList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
         return getResult(personModelsList, diseaseModelsList);
 
     }
-
     public DataResult<SearchMedicalRecordResult> findByPersonId(int id) throws ExecutionException, InterruptedException {
         CompletableFuture<PersonModel> personModel = fetchPersonById(id);
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
@@ -78,7 +81,6 @@ public class Service {
         int[] ids = {id};
         CompletableFuture<PersonModel[]> personModels = fetchPeopleByDiseaseIds(ids);
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
-
 
         if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
@@ -111,6 +113,15 @@ public class Service {
         List<PersonModel> personModelList = Arrays.asList(personModels.get());
         return getResult(personModelList,diseaseModelList);
     }
+    public DataResult<SearchMedicalRecordResult> findByDate(LocalDate from, LocalDate to) throws ExecutionException, InterruptedException {
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByDiseaseHistoryDate(from,to);
+        CompletableFuture.allOf(diseaseModels,personModels).join();
+
+        List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
+        List<PersonModel> personModelList = Arrays.asList(personModels.get());
+        return getResult(personModelList,diseaseModelList);
+    }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
         RestTemplate restTemplate = new RestTemplate();
@@ -123,22 +134,23 @@ public class Service {
         return CompletableFuture.completedFuture(response);
     }
     @Async("taskExecutor")
-    public CompletableFuture<PersonModel[]> fetchAllPeopleData(){
+    public CompletableFuture<PersonModel[]> fetchAllPeopleData() {
         RestTemplate restTemplate = new RestTemplate();
         PersonModel[] response;
         try {
+            System.out.println("HOW MANY TIMES");
             response = restTemplate.getForObject(fetchAllPeopleUri, PersonModel[].class);
         } catch (Exception e) {
             throw new UsersApiConnectionRefusedException();
         }
         return CompletableFuture.completedFuture(response);
     }
+
     @Async("taskExecutor")
     public CompletableFuture<PersonModel> fetchPersonById(int id){
         RestTemplate restTemplate = new RestTemplate();
         PersonModel response;
         String uri = fetchPersonByIdUri + id;
-        System.out.println(uri);
         response = restTemplate.getForObject(uri, PersonModel.class);
 
         return CompletableFuture.completedFuture(response);
@@ -148,7 +160,6 @@ public class Service {
         RestTemplate restTemplate = new RestTemplate();
         PersonModel[] response;
         GetPeopleByIdsBody body = new GetPeopleByIdsBody(Arrays.stream(ids).boxed().toArray(Integer[]::new));
-        System.out.println(fetchPeopleByDiseaseIdsUri);
         response = restTemplate.postForObject(fetchPeopleByDiseaseIdsUri,body,PersonModel[].class);
 
         return CompletableFuture.completedFuture(response);
@@ -161,6 +172,16 @@ public class Service {
         response = restTemplate.postForObject(fetchPeopleByNameUri,body,PersonModel[].class);
         return CompletableFuture.completedFuture(response);
     }
+
+    @Async("taskExecutor")
+    public CompletableFuture<PersonModel[]> fetchPeopleByDiseaseHistoryDate(LocalDate from, LocalDate to) {
+        RestTemplate restTemplate = new RestTemplate();
+        PersonModel[] response;
+        GetPeopleByDiseaseHistoryDate body = new GetPeopleByDiseaseHistoryDate(from,to);
+        response = restTemplate.postForObject(fetchPeopleByDateUri,body, PersonModel[].class);
+        return CompletableFuture.completedFuture(response);
+    }
+
 
     private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {
         List<MedicalRecordDto> medicalRecordDtos = createMedicalRecordDtos(personModelsList,diseaseModelsList);

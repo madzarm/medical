@@ -24,10 +24,10 @@ public class DatabaseConfig implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        Person person1 = new Person("Jack","Jackson",10,16);
-        Person person2 = new Person("Jack","Jackson",10,16);
-        Person person3 = new Person("Jack","Jackson",10,16);
+    public void run(String... args) {
+        Person person1 = new Person("Ivan","Ivanovic",10,16);
+        Person person2 = new Person("Ivo","Ivic",10,16);
+        Person person3 = new Person("Marko","Markovic",10,16);
         personRepository.saveAll(List.of(person2,person1,person3));
         DiseaseHistory diseaseHistory1 = new DiseaseHistory(person1, LocalDate.now(),1L);
         DiseaseHistory diseaseHistory2 = new DiseaseHistory(person1, LocalDate.now(),2L);

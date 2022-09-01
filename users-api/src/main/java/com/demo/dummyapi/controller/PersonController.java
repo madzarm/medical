@@ -2,6 +2,7 @@ package com.demo.dummyapi.controller;
 
 import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.services.PersonService;
+import com.demo.dummyapi.services.request.GetPeopleByDiseaseHistoryDate;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
 import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,10 @@ public class PersonController {
 	@PostMapping("/people-by-name")
 	public List<Person> getPeopleByName(@Valid @RequestBody GetPeopleByNameRequest request) {
 		return personService.getPeopleByName(request);
+	}
+	@PostMapping("/people-by-date")
+	public List<Person> getPeopleByDiseaseHistoryDate(@RequestBody GetPeopleByDiseaseHistoryDate request) {
+		return personService.getPeopleByDate(request);
 	}
 
 	@GetMapping(value = "/person/{id}")

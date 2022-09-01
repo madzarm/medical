@@ -4,6 +4,7 @@ import com.demo.dummyapi.entity.Person;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -14,4 +15,7 @@ public interface PersonRepository extends JpaRepository<Person,Long> {
     List<Person> findAllByNameAndSurname(String name, String surname);
     List<Person> findAllByName(String name);
     List<Person> findAllBySurname(String name);
+    List<Person> findAllDistinctByDiseaseHistoriesDateDiscoveredBetween(LocalDate from, LocalDate to);
+    List<Person> findAllDistinctByDiseaseHistoriesDateDiscoveredBefore(LocalDate to);
+    List<Person> findAllDistinctByDiseaseHistoriesDateDiscoveredAfter(LocalDate from);
 }

@@ -1,12 +1,13 @@
 package com.demo.dummyapi.services;
 
 import com.demo.dummyapi.entity.Person;
-import com.demo.dummyapi.repository.DiseaseHistoryRepository;
 import com.demo.dummyapi.repository.PersonRepository;
+import com.demo.dummyapi.services.request.GetPeopleByDiseaseHistoryDate;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
 import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,8 +42,20 @@ public class PersonService {
         boolean hasLastName = !request.getLastName().isBlank();
         if(hasFirstName && hasLastName)
             return personRepository.findAllByNameAndSurname(request.getFirstName(),request.getLastName());
-        if(hasFirstName)
+        else if(hasFirstName)
             return personRepository.findAllByName(request.getFirstName());
         return personRepository.findAllBySurname(request.getLastName());
+    }
+
+    public List<Person> getPeopleByDate(GetPeopleByDiseaseHistoryDate request) {
+        LocalDate from = request.getFrom();
+        LocalDate to = request.getTo();
+        boolean hasFrom = from != null;
+        boolean hasTo = to != null;
+        if(hasFrom && hasTo)
+            return personRepository.findAllDistinctByDiseaseHistoriesDateDiscoveredBetween(from,to);
+        else if (hasFrom)
+            return personRepository.findAllDistinctByDiseaseHistoriesDateDiscoveredAfter(from);
+        return personRepository.findAllDistinctByDiseaseHistoriesDateDiscoveredBefore(to);
     }
 }
