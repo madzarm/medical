@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Medical-api</title>
+</head>
+<body>
+<h1>Medical Records Application</h1>
+<p>Hello <span th:text="${users}">test</span></p>
+<table>
+    <tr>
+        <th>Documentation</th>
+    </tr>
+    <tr>
+        <th>
+            <a href="http://localhost:8080/api/v1/swagger-ui/index.html">Medical-API</a>
+        </th>
+    </tr>
+    <tr>
+       <th>
+           <a href="http://localhost:8081/swagger-ui/index.html">Users-API</a>
+       </th>
+    </tr>
+    <tr>
+        <th>
+            <a href="http://localhost:8082/swagger-ui/index.html">Diseases-API</a>
+        </th>
+    </tr>
+</table>
+<br>
+<a href="http://localhost:8080/api/v1/load">Load data</a>
+<br>
+<a href="http://localhost:8080/api/v1/medical-record">Medical Records</a>
+<br>
+<a href="http://localhost:8081/api/people">Get people</a>
+<br>
+</body>
+</html>
