@@ -8,10 +8,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.json.JSONObject;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -56,7 +52,7 @@ public class Controller {
         else if(hasDiseaseNameSearch)
             return service.findByDiseaseName(diseaseName).intoResponseEntity();
         else if(hasLastNameSearch || hasFirstNameSearch)
-            return new DataResult<>(false,"has name",null).intoResponseEntity();
+            return service.findByName(firstName,lastName).intoResponseEntity();
         else return service.findAll().intoResponseEntity();
     }
 

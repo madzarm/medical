@@ -4,22 +4,19 @@ import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.repository.DiseaseHistoryRepository;
 import com.demo.dummyapi.repository.PersonRepository;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
+import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
 
     private final PersonRepository personRepository;
-    private final DiseaseHistoryRepository diseaseHistoryRepository;
-
-    public PersonService(PersonRepository personRepository, DiseaseHistoryRepository diseaseHistoryRepository) {
+    public PersonService(PersonRepository personRepository) {
         this.personRepository = personRepository;
-        this.diseaseHistoryRepository = diseaseHistoryRepository;
     }
 
     public List<Person> getPeopleByDiseaseId(int id){
@@ -36,6 +33,16 @@ public class PersonService {
     public List<Person> getPeopleByDiseaseIds(GetPeopleByDiseaseIdsRequest request) {
         List<Integer> ints = Arrays.asList(request.getIds());
         List<Long> longs = ints.stream().mapToLong(d -> d).boxed().collect(Collectors.toList());
-        return personRepository.findAllByDiseaseHistoriesIdIn(longs);
+        return personRepository.findAllByDiseaseHistoriesDiseaseIdIn(longs);
+    }
+
+    public List<Person> getPeopleByName(GetPeopleByNameRequest request) {
+        boolean hasFirstName = !request.getFirstName().isBlank();
+        boolean hasLastName = !request.getLastName().isBlank();
+        if(hasFirstName && hasLastName)
+            return personRepository.findAllByNameAndSurname(request.getFirstName(),request.getLastName());
+        if(hasFirstName)
+            return personRepository.findAllByName(request.getFirstName());
+        return personRepository.findAllBySurname(request.getLastName());
     }
 }

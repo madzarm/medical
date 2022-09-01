@@ -3,10 +3,11 @@ package com.demo.dummyapi.controller;
 import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.services.PersonService;
 import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
+import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RequestMapping(value = "/api")
 @RestController
@@ -23,8 +24,12 @@ public class PersonController {
 	}
 
 	@PostMapping("/people")
-	public List<Person> getPeople(@RequestBody GetPeopleByDiseaseIdsRequest request) {
+	public List<Person> getPeopleByDiseaseIds(@RequestBody GetPeopleByDiseaseIdsRequest request) {
 		return personService.getPeopleByDiseaseIds(request);
+	}
+	@PostMapping("/people-by-name")
+	public List<Person> getPeopleByName(@Valid @RequestBody GetPeopleByNameRequest request) {
+		return personService.getPeopleByName(request);
 	}
 
 	@GetMapping(value = "/person/{id}")

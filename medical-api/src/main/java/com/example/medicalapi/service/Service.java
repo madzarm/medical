@@ -10,8 +10,8 @@ import com.example.medicalapi.domain.model.PersonModel;
 import com.example.medicalapi.exception.exceptions.DiseasesApiConnectionRefusedException;
 import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
-import com.example.medicalapi.service.body.GetDiseasesByIdsBody;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
+import com.example.medicalapi.service.request.GetPeopleByNameRequest;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,18 +28,14 @@ public class Service {
 
     @Value("${fetch.people.endpoint.uri}")
     private String fetchAllPeopleUri;
-    @Value("${fetch.people.by-id.endpoint.uri}")
-    private String fetchPeopleByIdUri;
-    @Value("${fetch.person.by-disease.endpoint.uri}")
-    private String fetchPersonByDiseaseUri;
+    @Value("${fetch.people.by-disease-ids.endpoint.uri}")
+    private String fetchPeopleByDiseaseIdsUri;
+    @Value("${fetch.people.by-name.endpoint.uri}")
+    private String fetchPeopleByNameUri;
     @Value("${fetch.person.by-id.endpoint.uri}")
     private String fetchPersonByIdUri;
     @Value("${fetch.diseases.endpoint.uri}")
     private String fetchAllDiseasesUri;
-    @Value("${fetch.disease.endpoint.uri}")
-    private String fetchDiseaseUri;
-    @Value("${fetch.disease.by-name.endpoint.uri}")
-    private String fetchDiseasesByNameUri;
     @Value("${api.diseases.name}")
     private String diseaseApiName;
     @Value("${api.users.name}")
@@ -67,10 +63,10 @@ public class Service {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         CompletableFuture.allOf(personModel,diseaseModels).join();
 
-        List<PersonModel> personModelsList = Arrays.asList(personModel.get());
+        List<PersonModel> personModelsList = Collections.singletonList(personModel.get());
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
 
-        if (personModelsList.isEmpty())
+        if (personModelsList.get(0)==null)
             throw new EmptyResponseException(usersApiName);
         else if (diseaseModelsList.isEmpty())
             throw new EmptyResponseException(diseaseApiName);
@@ -80,7 +76,7 @@ public class Service {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
         int[] ids = {id};
-        CompletableFuture<PersonModel[]> personModels = fetchPeopleByIds(ids);
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByDiseaseIds(ids);
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
 
 
@@ -95,7 +91,7 @@ public class Service {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelsList = Arrays.asList(diseaseModels.get());
         int[] ids = diseaseModelsList.stream().filter(d -> d.getName().contains(name)).map(DiseaseModel::getId).mapToInt(d -> d).toArray();
-        CompletableFuture<PersonModel[]> personModels = fetchPeopleByIds(ids);
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByDiseaseIds(ids);
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
 
 
@@ -105,6 +101,15 @@ public class Service {
             throw new EmptyResponseException(diseaseApiName);
 
         return getResult(personModelsList,diseaseModelsList);
+    }
+    public DataResult<SearchMedicalRecordResult> findByName(String firstName, String lastName) throws ExecutionException, InterruptedException {
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
+        CompletableFuture<PersonModel[]> personModels = fetchPeopleByName(firstName,lastName);
+        CompletableFuture.allOf(diseaseModels,personModels).join();
+
+        List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
+        List<PersonModel> personModelList = Arrays.asList(personModels.get());
+        return getResult(personModelList,diseaseModelList);
     }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
@@ -124,7 +129,7 @@ public class Service {
         try {
             response = restTemplate.getForObject(fetchAllPeopleUri, PersonModel[].class);
         } catch (Exception e) {
-            throw new DiseasesApiConnectionRefusedException();
+            throw new UsersApiConnectionRefusedException();
         }
         return CompletableFuture.completedFuture(response);
     }
@@ -139,13 +144,21 @@ public class Service {
         return CompletableFuture.completedFuture(response);
     }
     @Async("taskExecutor")
-    public CompletableFuture<PersonModel[]> fetchPeopleByIds(int[] ids){
+    public CompletableFuture<PersonModel[]> fetchPeopleByDiseaseIds(int[] ids){
         RestTemplate restTemplate = new RestTemplate();
         PersonModel[] response;
         GetPeopleByIdsBody body = new GetPeopleByIdsBody(Arrays.stream(ids).boxed().toArray(Integer[]::new));
+        System.out.println(fetchPeopleByDiseaseIdsUri);
+        response = restTemplate.postForObject(fetchPeopleByDiseaseIdsUri,body,PersonModel[].class);
 
-        response = restTemplate.postForObject(fetchPeopleByIdUri,body,PersonModel[].class);
-
+        return CompletableFuture.completedFuture(response);
+    }
+    @Async("taskExecutor")
+    public CompletableFuture<PersonModel[]> fetchPeopleByName(String firstName, String lastName){
+        RestTemplate restTemplate = new RestTemplate();
+        PersonModel[] response;
+        GetPeopleByNameRequest body = new GetPeopleByNameRequest(firstName,lastName);
+        response = restTemplate.postForObject(fetchPeopleByNameUri,body,PersonModel[].class);
         return CompletableFuture.completedFuture(response);
     }
 

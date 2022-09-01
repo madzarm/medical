@@ -10,5 +10,8 @@ import java.util.List;
 public interface PersonRepository extends JpaRepository<Person,Long> {
 
     List<Person> findAllByDiseaseHistoriesId(Long id);
-    List<Person> findAllByDiseaseHistoriesIdIn(List<Long> ids);
+    List<Person> findAllByDiseaseHistoriesDiseaseIdIn(List<Long> ids);
+    List<Person> findAllByNameAndSurname(String name, String surname);
+    List<Person> findAllByName(String name);
+    List<Person> findAllBySurname(String name);
 }
