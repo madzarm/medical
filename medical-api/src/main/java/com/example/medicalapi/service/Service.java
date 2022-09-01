@@ -12,7 +12,7 @@ import com.example.medicalapi.exception.exceptions.EmptyResponseException;
 import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedException;
 import com.example.medicalapi.service.body.GetPeopleByDiseaseHistoryDate;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
-import com.example.medicalapi.service.request.GetPeopleByNameRequest;
+import com.example.medicalapi.service.body.GetPeopleByNameBody;
 import com.example.medicalapi.service.result.DataResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
@@ -168,7 +168,7 @@ public class Service {
     public CompletableFuture<PersonModel[]> fetchPeopleByName(String firstName, String lastName){
         RestTemplate restTemplate = new RestTemplate();
         PersonModel[] response;
-        GetPeopleByNameRequest body = new GetPeopleByNameRequest(firstName,lastName);
+        GetPeopleByNameBody body = new GetPeopleByNameBody(firstName,lastName);
         response = restTemplate.postForObject(fetchPeopleByNameUri,body,PersonModel[].class);
         return CompletableFuture.completedFuture(response);
     }
