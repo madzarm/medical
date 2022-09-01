@@ -1,6 +1,7 @@
 package com.example.medicalapi.controller;
 
 import com.example.medicalapi.service.Service;
+import com.example.medicalapi.service.request.CreateDiseaseHistoryRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
@@ -32,12 +33,14 @@ public class Controller {
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findAll() throws ExecutionException, InterruptedException {
         return service.findAll().intoResponseEntity();
     }
-    //novi medical-record
     @PostMapping("/medical-record")
     public ResponseEntity<ActionResult> createMedicalRecord(@Valid @RequestBody CreateMedicalRecordRequest request) throws ExecutionException, InterruptedException {
         return service.createMedicalRecord(request).intoResponseEntity();
     }
-
+    @PostMapping("/person/diseaseHistory")
+    public ResponseEntity<ActionResult> createNewDiseaseHistory(@Valid @RequestBody CreateDiseaseHistoryRequest request) throws ExecutionException, InterruptedException {
+        return service.createDiseaseHistory(request).intoResponseEntity();
+    }
     @GetMapping("/medical-record")
     @Cacheable("person")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findMedicalRecords(
@@ -59,7 +62,8 @@ public class Controller {
         if(hasPersonIdSearch ? (hasDiseaseNameSearch || hasDiseaseIdSearch || hasNameSearch) :
                 (hasDiseaseIdSearch ? (hasNameSearch || hasDiseaseNameSearch) :
                         (hasDiseaseNameSearch ?(hasNameSearch || hasDateSearch) : (hasDateSearch && hasNameSearch))))
-            return new DataResult<>(false,"bad",null).intoResponseEntity();
+            return new DataResult<>(false,"You can combine only name searches (firstName & lastName), " +
+                    "and date searches (from & to). Other searches can not be combined with each other!",null).intoResponseEntity();
         else if (hasPersonIdSearch)
             return service.findByPersonId(personId).intoResponseEntity();
         else if(hasDiseaseIdSearch)

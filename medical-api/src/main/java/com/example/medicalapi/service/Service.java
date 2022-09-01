@@ -13,6 +13,7 @@ import com.example.medicalapi.exception.exceptions.UsersApiConnectionRefusedExce
 import com.example.medicalapi.service.body.GetPeopleByDiseaseHistoryDate;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.body.GetPeopleByNameBody;
+import com.example.medicalapi.service.request.CreateDiseaseHistoryRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
@@ -39,6 +40,8 @@ public class Service {
     private String fetchPeopleByNameUri;
     @Value("${create.person.endpoint.uri}")
     private String createPersonUri;
+    @Value("${create.disease-history.endpoint.uri}")
+    private String createDiseaseHistoryUri;
     @Value("${fetch.people.by-date.endpoint.uri}")
     private String fetchPeopleByDateUri;
     @Value("${fetch.person.by-id.endpoint.uri}")
@@ -100,7 +103,6 @@ public class Service {
         CompletableFuture<PersonModel[]> personModels = fetchPeopleByDiseaseIds(ids);
         List<PersonModel> personModelsList = Arrays.asList(personModels.get());
 
-
         if (personModelsList.isEmpty())
             throw new EmptyResponseException(usersApiName);
         else if (diseaseModelsList.isEmpty())
@@ -115,6 +117,12 @@ public class Service {
 
         List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
         List<PersonModel> personModelList = Arrays.asList(personModels.get());
+
+        if (personModelList.isEmpty())
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
+
         return getResult(personModelList,diseaseModelList);
     }
     public DataResult<SearchMedicalRecordResult> findByDate(LocalDate from, LocalDate to) throws ExecutionException, InterruptedException {
@@ -124,19 +132,44 @@ public class Service {
 
         List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
         List<PersonModel> personModelList = Arrays.asList(personModels.get());
+
+        if (personModelList.isEmpty())
+            throw new EmptyResponseException(usersApiName);
+        else if (diseaseModelList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
+
         return getResult(personModelList,diseaseModelList);
     }
     public ActionResult createMedicalRecord(CreateMedicalRecordRequest request) throws ExecutionException, InterruptedException {
-        //prvo vidjeti ako postoje ti id-evi diseasea
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
         if(diseaseModelList.isEmpty())
             throw new EmptyResponseException(diseaseApiName);
+        if(!request.getDiseaseIds().isEmpty()) {
+            request.getDiseaseIds().retainAll(diseaseModelList.stream().map(DiseaseModel::getId).collect(Collectors.toList()));
+            if (request.getDiseaseIds().isEmpty())
+                return new ActionResult(false, "Diseases with those ids do not exist!");
+        }
+        return persistPerson(request);
+    }
+    public ActionResult createDiseaseHistory(CreateDiseaseHistoryRequest request) throws ExecutionException, InterruptedException {
+        if(request.getDiseaseIds().isEmpty())
+            return new ActionResult(false,"DiseaseIds field must not be empty!");
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
+        CompletableFuture<PersonModel> personModel = fetchPersonById(request.getUserId());
+        CompletableFuture.allOf(diseaseModels,personModel).join();
+
+        List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
+        List<PersonModel> personModelList = Collections.singletonList(personModel.get());
+
+        if(personModelList.get(0)==null)
+            return new ActionResult(false,"Person with that id does not exist!");
 
         request.getDiseaseIds().retainAll(diseaseModelList.stream().map(DiseaseModel::getId).collect(Collectors.toList()));
-        if(request.getDiseaseIds().isEmpty())
+        if (request.getDiseaseIds().isEmpty())
             return new ActionResult(false, "Diseases with those ids do not exist!");
-        return createPerson(request);
+
+        return persistDiseaseHistory(request);
     }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
@@ -154,7 +187,6 @@ public class Service {
         RestTemplate restTemplate = new RestTemplate();
         PersonModel[] response;
         try {
-            System.out.println("HOW MANY TIMES");
             response = restTemplate.getForObject(fetchAllPeopleUri, PersonModel[].class);
         } catch (Exception e) {
             throw new UsersApiConnectionRefusedException();
@@ -197,9 +229,14 @@ public class Service {
         response = restTemplate.postForObject(fetchPeopleByDateUri,body, PersonModel[].class);
         return CompletableFuture.completedFuture(response);
     }
-    public ActionResult createPerson(CreateMedicalRecordRequest request) {
+    public ActionResult persistPerson(CreateMedicalRecordRequest request) {
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.postForObject(createPersonUri,request, ActionResult.class);
+    }
+
+    public ActionResult persistDiseaseHistory(CreateDiseaseHistoryRequest request){
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.postForObject(createDiseaseHistoryUri,request, ActionResult.class);
     }
 
     private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {

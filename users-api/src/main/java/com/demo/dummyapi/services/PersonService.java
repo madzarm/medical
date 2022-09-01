@@ -4,10 +4,7 @@ import com.demo.dummyapi.entity.DiseaseHistory;
 import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.repository.DiseaseHistoryRepository;
 import com.demo.dummyapi.repository.PersonRepository;
-import com.demo.dummyapi.services.request.CreateMedicalRecordRequst;
-import com.demo.dummyapi.services.request.GetPeopleByDiseaseHistoryDate;
-import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
-import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
+import com.demo.dummyapi.services.request.*;
 import com.demo.dummyapi.services.result.ActionResult;
 import org.springframework.stereotype.Service;
 
@@ -49,8 +46,8 @@ public class PersonService {
         if(hasFirstName && hasLastName)
             return personRepository.findAllByNameAndSurname(request.getFirstName(),request.getLastName());
         else if(hasFirstName)
-            return personRepository.findAllByName(request.getFirstName());
-        return personRepository.findAllBySurname(request.getLastName());
+            return personRepository.findAllByNameStartingWith(request.getFirstName());
+        return personRepository.findAllBySurnameStartingWith(request.getLastName());
     }
 
     public List<Person> getPeopleByDate(GetPeopleByDiseaseHistoryDate request) {
@@ -82,6 +79,21 @@ public class PersonService {
         diseaseHistoryRepository.saveAll(diseaseHistories);
 
         return new ActionResult(true, "Successfully created a medical record!");
+    }
+    public ActionResult createDiseaseHistory(CreateDiseaseHistoryRequest request){
+        List<DiseaseHistory> diseaseHistories = request.getDiseaseIds().stream()
+                .map(id -> DiseaseHistory.builder()
+                        .dateDiscovered(LocalDate.now())
+                        .diseaseId((long)id).build()
+                ).collect(Collectors.toList());
+        Person person = personRepository.findById((long) request.getUserId()).get();
+
+        person.addDiseaseHistories(diseaseHistories);
+
+        personRepository.save(person);
+        diseaseHistoryRepository.saveAll(diseaseHistories);
+
+        return new ActionResult(true, "Successfully created a disease history!");
     }
 
 }

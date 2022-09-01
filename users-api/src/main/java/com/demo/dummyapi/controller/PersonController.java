@@ -2,10 +2,7 @@ package com.demo.dummyapi.controller;
 
 import com.demo.dummyapi.entity.Person;
 import com.demo.dummyapi.services.PersonService;
-import com.demo.dummyapi.services.request.CreateMedicalRecordRequst;
-import com.demo.dummyapi.services.request.GetPeopleByDiseaseHistoryDate;
-import com.demo.dummyapi.services.request.GetPeopleByDiseaseIdsRequest;
-import com.demo.dummyapi.services.request.GetPeopleByNameRequest;
+import com.demo.dummyapi.services.request.*;
 import com.demo.dummyapi.services.result.ActionResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,5 +48,10 @@ public class PersonController {
 	@PostMapping("/people/create")
 	public ResponseEntity<ActionResult> createMedicalRecord(@Valid @RequestBody CreateMedicalRecordRequst request){
 		return personService.createMedicalRecord(request).intoResponseEntity();
+	}
+
+	@PostMapping("/person/disease")
+	public ResponseEntity<ActionResult> createDiseaseHistory(@Valid @RequestBody CreateDiseaseHistoryRequest request){
+		return personService.createDiseaseHistory(request).intoResponseEntity();
 	}
 }

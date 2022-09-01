@@ -46,4 +46,8 @@ public class Person {
 		this.diseaseHistories = diseaseHistories;
 		diseaseHistories.forEach(dh -> dh.setPerson(this));
 	}
+	public void addDiseaseHistories(List<DiseaseHistory> diseaseHistories) {
+		this.diseaseHistories.addAll(diseaseHistories);
+		diseaseHistories.forEach(dh -> dh.setPerson(this));
+	}
 }
