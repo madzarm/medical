@@ -2,6 +2,7 @@ package com.example.medicalapi.service;
 
 import com.example.medicalapi.domain.DiseaseHistory;
 import com.example.medicalapi.domain.MedicalRecord;
+import com.example.medicalapi.domain.dto.DiseaseDto;
 import com.example.medicalapi.domain.dto.DiseaseHistoryDto;
 import com.example.medicalapi.domain.dto.MedicalRecordDto;
 import com.example.medicalapi.domain.model.DiseaseHistoryModel;
@@ -18,6 +19,7 @@ import com.example.medicalapi.service.request.CreateDiseaseRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
+import com.example.medicalapi.service.result.SearchDiseasesResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -143,6 +145,15 @@ public class Service {
 
         return getResult(personModelList,diseaseModelList);
     }
+    public DataResult<SearchDiseasesResult> findAllDiseases() throws ExecutionException, InterruptedException {
+        CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
+        List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
+
+        if (diseaseModelList.isEmpty())
+            throw new EmptyResponseException(diseaseApiName);
+
+        return getDiseaseResult(diseaseModelList);
+    }
     public ActionResult createMedicalRecord(CreateMedicalRecordRequest request) throws ExecutionException, InterruptedException {
         CompletableFuture<DiseaseModel[]> diseaseModels = fetchAllDiseaseData();
         List<DiseaseModel> diseaseModelList = Arrays.asList(diseaseModels.get());
@@ -261,11 +272,28 @@ public class Service {
         return new DataResult<>(true, "Successfully fetched data!", searchMedicalRecordResult);
     }
 
+    private DataResult<SearchDiseasesResult> getDiseaseResult(List<DiseaseModel> diseaseModelList){
+        List<DiseaseDto> diseaseDtos = createDiseaseDtos(diseaseModelList);
+
+        SearchDiseasesResult searchDiseasesResult = new SearchDiseasesResult();
+        searchDiseasesResult.setDiseases(diseaseDtos);
+
+        return new DataResult<>(true, "Successfully fetched data!", searchDiseasesResult);
+    }
+
+    private List<DiseaseDto> createDiseaseDtos(List<DiseaseModel> diseaseModelList){
+        return diseaseModelList.stream().map(d -> DiseaseDto.builder()
+                .name(d.getName())
+                .id(d.getId())
+                .curable(d.isCurable()).build()).collect(Collectors.toList());
+    }
+
     private List<MedicalRecordDto> createMedicalRecordDtos(List<PersonModel> personModels, List<DiseaseModel> diseaseModels){
         return personModels.stream().map(p -> {
             List<DiseaseHistory> diseaseHistories = modelToDiseaseHistory(p.getDiseaseHistories(),diseaseModels);
 
             return MedicalRecordDto.builder()
+                    .userId(p.getId())
                     .diseaseHistories(mapDiseaseHistoryToDto(diseaseHistories))
                     .firstName(p.getName())
                     .lastName(p.getSurname())

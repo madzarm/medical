@@ -6,9 +6,9 @@ import com.example.medicalapi.service.request.CreateDiseaseRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
+import com.example.medicalapi.service.result.SearchDiseasesResult;
 import com.example.medicalapi.service.result.SearchMedicalRecordResult;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +30,6 @@ public class Controller {
     }
 
     @GetMapping("/load")
-    @Cacheable("people")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findAll() throws ExecutionException, InterruptedException {
         return service.findAll().intoResponseEntity();
     }
@@ -46,8 +45,11 @@ public class Controller {
     public ResponseEntity<ActionResult> createNewDisease(@Valid @RequestBody CreateDiseaseRequest request) {
         return service.createDisease(request).intoResponseEntity();
     }
+    @GetMapping("/diseases")
+    public ResponseEntity<DataResult<SearchDiseasesResult>> createNewDisease() throws ExecutionException, InterruptedException {
+        return service.findAllDiseases().intoResponseEntity();
+    }
     @GetMapping("/medical-record")
-    @Cacheable("person")
     public ResponseEntity<DataResult<SearchMedicalRecordResult>> findMedicalRecords(
             @RequestParam(required = false) Integer personId,
             @RequestParam(required = false) Integer diseaseId,

@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class MedicalRecordDto {
+    private int userId;
     private String firstName;
     private String lastName;
     private float weight;
