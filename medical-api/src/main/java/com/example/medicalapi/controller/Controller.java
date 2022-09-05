@@ -2,6 +2,7 @@ package com.example.medicalapi.controller;
 
 import com.example.medicalapi.service.Service;
 import com.example.medicalapi.service.request.CreateDiseaseHistoryRequest;
+import com.example.medicalapi.service.request.CreateDiseaseRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
@@ -40,6 +41,10 @@ public class Controller {
     @PostMapping("/person/diseaseHistory")
     public ResponseEntity<ActionResult> createNewDiseaseHistory(@Valid @RequestBody CreateDiseaseHistoryRequest request) throws ExecutionException, InterruptedException {
         return service.createDiseaseHistory(request).intoResponseEntity();
+    }
+    @PostMapping("/diseases")
+    public ResponseEntity<ActionResult> createNewDisease(@Valid @RequestBody CreateDiseaseRequest request) {
+        return service.createDisease(request).intoResponseEntity();
     }
     @GetMapping("/medical-record")
     @Cacheable("person")

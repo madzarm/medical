@@ -14,6 +14,7 @@ import com.example.medicalapi.service.body.GetPeopleByDiseaseHistoryDate;
 import com.example.medicalapi.service.body.GetPeopleByIdsBody;
 import com.example.medicalapi.service.body.GetPeopleByNameBody;
 import com.example.medicalapi.service.request.CreateDiseaseHistoryRequest;
+import com.example.medicalapi.service.request.CreateDiseaseRequest;
 import com.example.medicalapi.service.request.CreateMedicalRecordRequest;
 import com.example.medicalapi.service.result.ActionResult;
 import com.example.medicalapi.service.result.DataResult;
@@ -48,6 +49,8 @@ public class Service {
     private String fetchPersonByIdUri;
     @Value("${fetch.diseases.endpoint.uri}")
     private String fetchAllDiseasesUri;
+    @Value("${create.disease.endpoint.uri}")
+    private String createDiseaseUri;
     @Value("${api.diseases.name}")
     private String diseaseApiName;
     @Value("${api.users.name}")
@@ -171,6 +174,11 @@ public class Service {
 
         return persistDiseaseHistory(request);
     }
+
+    public ActionResult createDisease(CreateDiseaseRequest request){
+        return persistDisease(request);
+
+    }
     @Async("taskExecutor")
     public CompletableFuture<DiseaseModel[]> fetchAllDiseaseData(){
         RestTemplate restTemplate = new RestTemplate();
@@ -237,6 +245,11 @@ public class Service {
     public ActionResult persistDiseaseHistory(CreateDiseaseHistoryRequest request){
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.postForObject(createDiseaseHistoryUri,request, ActionResult.class);
+    }
+
+    public ActionResult persistDisease(CreateDiseaseRequest request) {
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.postForObject(createDiseaseUri,request, ActionResult.class);
     }
 
     private DataResult<SearchMedicalRecordResult> getResult(List<PersonModel> personModelsList, List<DiseaseModel> diseaseModelsList) {
